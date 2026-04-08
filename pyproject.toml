@@ -1,0 +1,17 @@
+[project]
+name = "print-pdf"
+version = "0.1.0"
+description = "Prepare PDF files for printing with duplex, 2-up, page numbers support"
+requires-python = ">=3.10"
+dependencies = [
+    "pymupdf>=1.25.0",
+    "PyQt6>=6.6.0",
+]
+
+[project.scripts]
+print-pdf = "print_pdf.cli:main"
+print-pdf-gui = "print_pdf.gui:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

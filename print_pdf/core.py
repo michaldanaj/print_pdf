@@ -1,0 +1,223 @@
+"""Core PDF processing logic for print preparation."""
+
+import fitz  # PyMuPDF
+
+A4_WIDTH = 595.28  # points
+A4_HEIGHT = 841.89  # points
+
+
+def process_pdf(
+    input_path: str,
+    output_base: str,
+    duplex: bool = False,
+    page_numbers: bool = False,
+    two_up: bool = False,
+    landscape: bool = False,
+) -> list[str]:
+    """Process a PDF file for printing. Returns list of output file paths."""
+
+    src = fitz.open(input_path)
+
+    # Step 1: Determine output page size based on landscape option
+    if landscape:
+        sheet_width, sheet_height = A4_HEIGHT, A4_WIDTH
+    else:
+        sheet_width, sheet_height = A4_WIDTH, A4_HEIGHT
+
+    # Step 2: If 2-up, place two source pages on one sheet
+    if two_up:
+        doc = _make_two_up(src, sheet_width, sheet_height, landscape)
+    else:
+        doc = _reformat_pages(src, sheet_width, sheet_height)
+
+    # Step 3: Add page numbers if requested
+    if page_numbers:
+        _add_page_numbers(doc)
+
+    # Step 4 & 5: Duplex splitting or single output
+    if duplex:
+        return _split_duplex(doc, output_base)
+    else:
+        out_path = f"{output_base}.pdf"
+        doc.save(out_path)
+        doc.close()
+        return [out_path]
+
+
+def _reformat_pages(src: fitz.Document, width: float, height: float) -> fitz.Document:
+    """Reformat source pages to fit the target page size."""
+    doc = fitz.open()
+    for i in range(len(src)):
+        new_page = doc.new_page(width=width, height=height)
+        src_page = src[i]
+        src_rect = src_page.rect
+
+        # Scale to fit within target page, centered
+        scale_x = width / src_rect.width
+        scale_y = height / src_rect.height
+        scale = min(scale_x, scale_y)
+
+        scaled_w = src_rect.width * scale
+        scaled_h = src_rect.height * scale
+        x_offset = (width - scaled_w) / 2
+        y_offset = (height - scaled_h) / 2
+
+        target_rect = fitz.Rect(x_offset, y_offset, x_offset + scaled_w, y_offset + scaled_h)
+        new_page.show_pdf_page(target_rect, src, i)
+
+    return doc
+
+
+def _make_two_up(
+    src: fitz.Document, sheet_width: float, sheet_height: float, landscape: bool
+) -> fitz.Document:
+    """Place two source pages on one sheet.
+
+    If landscape: side by side. If portrait: one above the other.
+    """
+    doc = fitz.open()
+    total = len(src)
+
+    for i in range(0, total, 2):
+        new_page = doc.new_page(width=sheet_width, height=sheet_height)
+
+        if landscape:
+            # Side by side
+            half_w = sheet_width / 2
+            slot_h = sheet_height
+            slots = [
+                fitz.Rect(0, 0, half_w, slot_h),
+                fitz.Rect(half_w, 0, sheet_width, slot_h),
+            ]
+        else:
+            # One above the other
+            half_h = sheet_height / 2
+            slot_w = sheet_width
+            slots = [
+                fitz.Rect(0, 0, slot_w, half_h),
+                fitz.Rect(0, half_h, slot_w, sheet_height),
+            ]
+
+        for j, slot in enumerate(slots):
+            page_idx = i + j
+            if page_idx >= total:
+                break
+            src_page = src[page_idx]
+            src_rect = src_page.rect
+
+            # Scale source page to fit within the slot
+            scale_x = slot.width / src_rect.width
+            scale_y = slot.height / src_rect.height
+            scale = min(scale_x, scale_y)
+
+            scaled_w = src_rect.width * scale
+            scaled_h = src_rect.height * scale
+            x_off = slot.x0 + (slot.width - scaled_w) / 2
+            y_off = slot.y0 + (slot.height - scaled_h) / 2
+
+            target_rect = fitz.Rect(x_off, y_off, x_off + scaled_w, y_off + scaled_h)
+            new_page.show_pdf_page(target_rect, src, page_idx)
+
+    return doc
+
+
+def _add_page_numbers(doc: fitz.Document) -> None:
+    """Add page numbers at the bottom center of each page."""
+    total = len(doc)
+    for i in range(total):
+        page = doc[i]
+        rect = page.rect
+        text = f"{i + 1} / {total}"
+        font_size = 10
+        text_width = fitz.get_text_length(text, fontsize=font_size)
+        x = (rect.width - text_width) / 2
+        y = rect.height - 15
+        page.insert_text(
+            fitz.Point(x, y),
+            text,
+            fontsize=font_size,
+            color=(0.3, 0.3, 0.3),
+        )
+
+
+def _split_duplex(doc: fitz.Document, output_base: str) -> list[str]:
+    """Split document for manual duplex printing.
+
+    - If page count is odd, add a blank page at the end
+    - Reverse order of odd pages (1, 3, 5... becomes 5, 3, 1)
+    - Save odd pages and even pages to separate files
+    """
+    total = len(doc)
+
+    # Pad to even number of pages
+    if total % 2 != 0:
+        last_page = doc[-1]
+        doc.new_page(width=last_page.rect.width, height=last_page.rect.height)
+        total = len(doc)
+
+    # Collect odd (0-indexed: 0,2,4...) and even (0-indexed: 1,3,5...) page indices
+    odd_indices = list(range(0, total, 2))   # pages 1,3,5... (0-indexed: 0,2,4...)
+    even_indices = list(range(1, total, 2))  # pages 2,4,6... (0-indexed: 1,3,5...)
+
+    # Reverse odd pages so they print in correct order for manual duplex
+    odd_indices.reverse()
+
+    odd_path = f"{output_base}_odd.pdf"
+    even_path = f"{output_base}_even.pdf"
+
+    odd_doc = fitz.open()
+    for idx in odd_indices:
+        odd_doc.insert_pdf(doc, from_page=idx, to_page=idx)
+    odd_doc.save(odd_path)
+    odd_doc.close()
+
+    even_doc = fitz.open()
+    for idx in even_indices:
+        even_doc.insert_pdf(doc, from_page=idx, to_page=idx)
+    even_doc.save(even_path)
+    even_doc.close()
+
+    doc.close()
+    return [odd_path, even_path]
+
+
+def render_preview(
+    input_path: str,
+    page_numbers: bool = False,
+    two_up: bool = False,
+    landscape: bool = False,
+    page_index: int = 0,
+    target_width: int = 400,
+) -> tuple[bytes, int]:
+    """Render a preview of a processed page as PNG bytes.
+
+    Returns (png_bytes, total_pages).
+    """
+    src = fitz.open(input_path)
+
+    if landscape:
+        sheet_width, sheet_height = A4_HEIGHT, A4_WIDTH
+    else:
+        sheet_width, sheet_height = A4_WIDTH, A4_HEIGHT
+
+    if two_up:
+        doc = _make_two_up(src, sheet_width, sheet_height, landscape)
+    else:
+        doc = _reformat_pages(src, sheet_width, sheet_height)
+
+    if page_numbers:
+        _add_page_numbers(doc)
+
+    total = len(doc)
+    page_index = max(0, min(page_index, total - 1))
+
+    page = doc[page_index]
+    zoom = target_width / page.rect.width
+    mat = fitz.Matrix(zoom, zoom)
+    pix = page.get_pixmap(matrix=mat)
+    png_bytes = pix.tobytes("png")
+
+    doc.close()
+    src.close()
+
+    return png_bytes, total
