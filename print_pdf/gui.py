@@ -230,13 +230,13 @@ class PrintPdfApp(QWidget):
         file_layout.addWidget(lbl_input)
 
         input_btn_row = QHBoxLayout()
-        browse_btn = QPushButton("Wybierz...")
+        browse_btn = QPushButton("Otwórz")
         browse_btn.setObjectName("browseBtn")
         browse_btn.setToolTip("Wybierz plik PDF do przetworzenia")
         browse_btn.clicked.connect(self._browse_input)
         input_btn_row.addWidget(browse_btn)
 
-        test_btn = QPushButton("Test")
+        test_btn = QPushButton("Testowy")
         test_btn.setObjectName("smallBtn")
         test_btn.setToolTip("Wygeneruj testowy PDF (4 strony) i załaduj go")
         test_btn.clicked.connect(self._load_test_pdf)
@@ -263,6 +263,7 @@ class PrintPdfApp(QWidget):
         input_row.addWidget(self.btn_open_input)
 
         file_layout.addLayout(input_row)
+        file_layout.addSpacing(10)
 
         # Output file 1
         self.lbl_output1 = QLabel("Plik wyjściowy")
