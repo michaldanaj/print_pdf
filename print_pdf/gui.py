@@ -1,14 +1,15 @@
 """GUI for print-pdf with live preview (PyQt6)."""
 
+import os
+import subprocess
 import sys
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QIcon, QImage, QPalette, QPixmap
+from PyQt6.QtGui import QFont, QImage, QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
     QFileDialog,
-    QFrame,
     QGraphicsDropShadowEffect,
     QGroupBox,
     QHBoxLayout,
@@ -60,23 +61,22 @@ QLineEdit:focus {
     border-color: #5b9bd5;
 }
 
-QPushButton#browseBtn {
+QPushButton#browseBtn, QPushButton#smallBtn {
     padding: 5px 10px;
     border: 1px solid #c0c0c0;
     border-radius: 4px;
     background: #f0f0f0;
 }
-QPushButton#browseBtn:hover {
+QPushButton#browseBtn:hover, QPushButton#smallBtn:hover {
     background: #e0e0e0;
 }
 
-QCheckBox {
-    spacing: 6px;
-    padding: 3px 0;
-}
-QCheckBox::indicator {
-    width: 16px;
-    height: 16px;
+QPushButton#previewActiveBtn {
+    padding: 5px 10px;
+    border: 1px solid #5b9bd5;
+    border-radius: 4px;
+    background: #e0edfa;
+    font-weight: bold;
 }
 
 QPushButton#generateBtn {
@@ -95,6 +95,18 @@ QPushButton#generateBtn:pressed {
     background-color: #2a5a8c;
 }
 
+QPushButton#secondaryBtn {
+    padding: 10px;
+    font-size: 13px;
+    color: #333333;
+    background-color: #e8e8e8;
+    border: 1px solid #c0c0c0;
+    border-radius: 6px;
+}
+QPushButton#secondaryBtn:hover {
+    background-color: #d8d8d8;
+}
+
 QPushButton#navBtn {
     padding: 6px 14px;
     border: 1px solid #c0c0c0;
@@ -104,6 +116,17 @@ QPushButton#navBtn {
 QPushButton#navBtn:hover {
     background: #e8f0fe;
     border-color: #5b9bd5;
+}
+
+QPushButton#linkBtn {
+    border: none;
+    background: transparent;
+    color: #4a86c8;
+    text-decoration: underline;
+    padding: 2px;
+}
+QPushButton#linkBtn:hover {
+    color: #2a5a8c;
 }
 
 QScrollArea#previewArea {
@@ -123,6 +146,21 @@ QLabel#titleLabel {
     font-weight: bold;
     color: #333333;
 }
+
+QLabel#locationLabel {
+    font-size: 10px;
+    color: #666666;
+    padding: 2px 0;
+}
+
+QCheckBox {
+    spacing: 6px;
+    padding: 3px 0;
+}
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+}
 """
 
 
@@ -131,11 +169,13 @@ class PrintPdfApp(QWidget):
         super().__init__()
         self.setObjectName("centralWidget")
         self.setWindowTitle("Print PDF - Przygotowanie wydruku")
-        self.setMinimumSize(800, 580)
+        self.setMinimumSize(900, 620)
 
         self.current_page = 0
         self.total_pages = 0
         self._current_pixmap: QPixmap | None = None
+        self.save_dir = ""
+        self.preview_mode = "processed"  # "input", "processed", "odd", "even"
 
         self._build_ui()
 
@@ -148,7 +188,6 @@ class PrintPdfApp(QWidget):
         left_panel = QVBoxLayout()
         left_panel.setSpacing(8)
 
-        # Title
         title = QLabel("Print PDF")
         title.setObjectName("titleLabel")
         left_panel.addWidget(title)
@@ -162,6 +201,7 @@ class PrintPdfApp(QWidget):
         file_layout = QVBoxLayout(file_group)
         file_layout.setSpacing(6)
 
+        # Input file
         lbl_input = QLabel("Plik wejściowy")
         lbl_input.setObjectName("sectionLabel")
         file_layout.addWidget(lbl_input)
@@ -169,21 +209,82 @@ class PrintPdfApp(QWidget):
         input_row = QHBoxLayout()
         self.input_edit = QLineEdit()
         self.input_edit.setPlaceholderText("Wybierz plik PDF...")
+        self.input_edit.setReadOnly(True)
         input_row.addWidget(self.input_edit)
-        browse_btn = QPushButton("Otwórz")
+
+        browse_btn = QPushButton("Wybierz...")
         browse_btn.setObjectName("browseBtn")
         browse_btn.setToolTip("Wybierz plik PDF do przetworzenia")
         browse_btn.clicked.connect(self._browse_input)
         input_row.addWidget(browse_btn)
+
+        self.btn_preview_input = QPushButton("Podgląd")
+        self.btn_preview_input.setObjectName("smallBtn")
+        self.btn_preview_input.clicked.connect(lambda: self._set_preview_mode("input"))
+        input_row.addWidget(self.btn_preview_input)
+
+        self.btn_open_input = QPushButton("Otwórz")
+        self.btn_open_input.setObjectName("smallBtn")
+        self.btn_open_input.setToolTip("Otwórz w zewnętrznym programie")
+        self.btn_open_input.clicked.connect(self._open_input_external)
+        input_row.addWidget(self.btn_open_input)
+
         file_layout.addLayout(input_row)
 
-        lbl_output = QLabel("Nazwa wyjściowa")
-        lbl_output.setObjectName("sectionLabel")
-        file_layout.addWidget(lbl_output)
-        self.output_edit = QLineEdit()
-        self.output_edit.setPlaceholderText("bez rozszerzenia .pdf")
-        self.output_edit.setToolTip("Bazowa nazwa pliku wyjściowego (bez rozszerzenia)")
-        file_layout.addWidget(self.output_edit)
+        # Output file 1
+        self.lbl_output1 = QLabel("Plik wyjściowy")
+        self.lbl_output1.setObjectName("sectionLabel")
+        file_layout.addWidget(self.lbl_output1)
+
+        output1_row = QHBoxLayout()
+        self.output1_edit = QLineEdit()
+        self.output1_edit.setPlaceholderText("nazwa_pliku.pdf")
+        self.output1_edit.textChanged.connect(self._update_output_tooltips)
+        output1_row.addWidget(self.output1_edit)
+
+        self.btn_preview_output1 = QPushButton("Podgląd")
+        self.btn_preview_output1.setObjectName("smallBtn")
+        self.btn_preview_output1.clicked.connect(self._preview_output1)
+        output1_row.addWidget(self.btn_preview_output1)
+
+        self.btn_open_output1 = QPushButton("Otwórz")
+        self.btn_open_output1.setObjectName("smallBtn")
+        self.btn_open_output1.setToolTip("Otwórz w zewnętrznym programie")
+        self.btn_open_output1.clicked.connect(lambda: self._open_output_external(1))
+        output1_row.addWidget(self.btn_open_output1)
+
+        file_layout.addLayout(output1_row)
+
+        # Output file 2 (duplex only)
+        self.lbl_output2 = QLabel("Strony parzyste")
+        self.lbl_output2.setObjectName("sectionLabel")
+        file_layout.addWidget(self.lbl_output2)
+
+        output2_row_widget = QWidget()
+        self.output2_row = output2_row_widget
+        output2_row = QHBoxLayout(output2_row_widget)
+        output2_row.setContentsMargins(0, 0, 0, 0)
+        self.output2_edit = QLineEdit()
+        self.output2_edit.setPlaceholderText("nazwa_pliku.pdf")
+        self.output2_edit.textChanged.connect(self._update_output_tooltips)
+        output2_row.addWidget(self.output2_edit)
+
+        self.btn_preview_output2 = QPushButton("Podgląd")
+        self.btn_preview_output2.setObjectName("smallBtn")
+        self.btn_preview_output2.clicked.connect(lambda: self._set_preview_mode("even"))
+        output2_row.addWidget(self.btn_preview_output2)
+
+        self.btn_open_output2 = QPushButton("Otwórz")
+        self.btn_open_output2.setObjectName("smallBtn")
+        self.btn_open_output2.setToolTip("Otwórz w zewnętrznym programie")
+        self.btn_open_output2.clicked.connect(lambda: self._open_output_external(2))
+        output2_row.addWidget(self.btn_open_output2)
+
+        file_layout.addWidget(output2_row_widget)
+
+        # Initially hide output2 (shown only for duplex)
+        self.lbl_output2.setVisible(False)
+        self.output2_row.setVisible(False)
 
         left_panel.addWidget(file_group)
 
@@ -194,17 +295,17 @@ class PrintPdfApp(QWidget):
 
         self.cb_landscape = QCheckBox("Orientacja pozioma")
         self.cb_landscape.setToolTip("Układ poziomy (landscape) zamiast pionowego")
-        self.cb_landscape.stateChanged.connect(self._update_preview)
+        self.cb_landscape.stateChanged.connect(self._on_option_changed)
         opts_layout.addWidget(self.cb_landscape)
 
         self.cb_two_up = QCheckBox("2 strony na arkuszu")
         self.cb_two_up.setToolTip("Umieszcza dwie strony źródłowe na jednym arkuszu")
-        self.cb_two_up.stateChanged.connect(self._update_preview)
+        self.cb_two_up.stateChanged.connect(self._on_option_changed)
         opts_layout.addWidget(self.cb_two_up)
 
         self.cb_numbers = QCheckBox("Numery stron")
         self.cb_numbers.setToolTip("Dodaje numery stron na dolnym marginesie")
-        self.cb_numbers.stateChanged.connect(self._update_preview)
+        self.cb_numbers.stateChanged.connect(self._on_option_changed)
         opts_layout.addWidget(self.cb_numbers)
 
         self.cb_duplex = QCheckBox("Druk dwustronny (ręczny)")
@@ -212,25 +313,52 @@ class PrintPdfApp(QWidget):
             "Rozdziela strony parzyste i nieparzyste do osobnych plików\n"
             "z odwróconą kolejnością, do ręcznego druku dwustronnego"
         )
-        self.cb_duplex.stateChanged.connect(self._update_preview)
+        self.cb_duplex.stateChanged.connect(self._on_duplex_changed)
         opts_layout.addWidget(self.cb_duplex)
 
         left_panel.addWidget(opts_group)
 
-        # Generate button
-        left_panel.addSpacing(8)
-        gen_btn = QPushButton("Generuj PDF")
+        # --- Save group ---
+        save_group = QGroupBox("Zapis")
+        save_layout = QVBoxLayout(save_group)
+        save_layout.setSpacing(6)
+
+        loc_row = QHBoxLayout()
+        loc_label = QLabel("Lokalizacja:")
+        loc_label.setObjectName("sectionLabel")
+        loc_row.addWidget(loc_label)
+
+        self.location_btn = QPushButton("")
+        self.location_btn.setObjectName("linkBtn")
+        self.location_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.location_btn.setToolTip("Otwórz w menedżerze plików")
+        self.location_btn.clicked.connect(self._open_save_dir)
+        loc_row.addWidget(self.location_btn, stretch=1)
+        save_layout.addLayout(loc_row)
+
+        btn_row = QHBoxLayout()
+        gen_btn = QPushButton("Zapisz PDF")
         gen_btn.setObjectName("generateBtn")
-        gen_btn.setToolTip("Przetwórz i zapisz wynikowy PDF")
-        gen_btn.clicked.connect(self._generate)
+        gen_btn.setToolTip("Zapisz w lokalizacji oryginalnego pliku")
+        gen_btn.clicked.connect(self._save_default)
         gen_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        left_panel.addWidget(gen_btn)
+        btn_row.addWidget(gen_btn)
+
+        save_as_btn = QPushButton("Zapisz w lokalizacji")
+        save_as_btn.setObjectName("secondaryBtn")
+        save_as_btn.setToolTip("Wybierz inną lokalizację i zapisz")
+        save_as_btn.clicked.connect(self._save_choose_location)
+        save_as_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_row.addWidget(save_as_btn)
+
+        save_layout.addLayout(btn_row)
+        left_panel.addWidget(save_group)
 
         left_panel.addStretch()
 
         left_widget = QWidget()
         left_widget.setLayout(left_panel)
-        left_widget.setFixedWidth(280)
+        left_widget.setFixedWidth(320)
         main_layout.addWidget(left_widget)
 
         # --- Right panel: preview ---
@@ -245,7 +373,9 @@ class PrintPdfApp(QWidget):
         self.scroll.setObjectName("previewArea")
         self.scroll.setWidgetResizable(True)
         self.preview_label = QLabel()
-        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        self.preview_label.setAlignment(
+            Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
+        )
         self.preview_label.setStyleSheet("background: transparent;")
         self.scroll.setWidget(self.preview_label)
 
@@ -281,14 +411,147 @@ class PrintPdfApp(QWidget):
         right_panel.addLayout(nav)
         main_layout.addLayout(right_panel, stretch=1)
 
+        self._update_location_display()
+
+    # --- File browsing ---
+
     def _browse_input(self):
         path, _ = QFileDialog.getOpenFileName(self, "Wybierz PDF", "", "PDF (*.pdf)")
         if path:
             self.input_edit.setText(path)
-            if not self.output_edit.text():
-                self.output_edit.setText(path.rsplit(".", 1)[0] + "_print")
+            self.input_edit.setToolTip(path)
+            self.save_dir = os.path.dirname(path)
+            self._update_location_display()
+            base = os.path.splitext(os.path.basename(path))[0]
+            if self.cb_duplex.isChecked():
+                self.output1_edit.setText(f"{base}_print_odd.pdf")
+                self.output2_edit.setText(f"{base}_print_even.pdf")
+            else:
+                self.output1_edit.setText(f"{base}_print.pdf")
             self.current_page = 0
             self._update_preview()
+
+    # --- Duplex toggle ---
+
+    def _on_duplex_changed(self, _state=None):
+        is_duplex = self.cb_duplex.isChecked()
+        self.lbl_output2.setVisible(is_duplex)
+        self.output2_row.setVisible(is_duplex)
+
+        if is_duplex:
+            self.lbl_output1.setText("Strony nieparzyste")
+            # Update filenames
+            current = self.output1_edit.text()
+            base = current.replace(".pdf", "").replace("_print", "")
+            self.output1_edit.setText(f"{base}_print_odd.pdf")
+            self.output2_edit.setText(f"{base}_print_even.pdf")
+            if self.preview_mode == "processed":
+                self.preview_mode = "odd"
+        else:
+            self.lbl_output1.setText("Plik wyjściowy")
+            current = self.output1_edit.text()
+            base = current.replace(".pdf", "").replace("_print_odd", "").replace("_print", "")
+            self.output1_edit.setText(f"{base}_print.pdf")
+            self.output2_edit.clear()
+            if self.preview_mode in ("odd", "even"):
+                self.preview_mode = "processed"
+
+        self.current_page = 0
+        self._update_preview_buttons()
+        self._update_preview()
+
+    def _on_option_changed(self, _state=None):
+        self.current_page = 0
+        self._update_preview()
+
+    # --- Preview mode ---
+
+    def _set_preview_mode(self, mode: str):
+        self.preview_mode = mode
+        self.current_page = 0
+        self._update_preview_buttons()
+        self._update_preview()
+
+    def _preview_output1(self):
+        mode = "odd" if self.cb_duplex.isChecked() else "processed"
+        self._set_preview_mode(mode)
+
+    def _update_preview_buttons(self):
+        buttons = {
+            "input": self.btn_preview_input,
+            "processed": self.btn_preview_output1,
+            "odd": self.btn_preview_output1,
+            "even": self.btn_preview_output2,
+        }
+        for mode, btn in buttons.items():
+            if mode == self.preview_mode:
+                btn.setObjectName("previewActiveBtn")
+            else:
+                btn.setObjectName("smallBtn")
+            btn.style().unpolish(btn)
+            btn.style().polish(btn)
+
+    # --- Tooltips ---
+
+    def _update_output_tooltips(self):
+        if self.save_dir:
+            name1 = self.output1_edit.text()
+            if name1:
+                self.output1_edit.setToolTip(os.path.join(self.save_dir, name1))
+            else:
+                self.output1_edit.setToolTip("")
+            name2 = self.output2_edit.text()
+            if name2:
+                self.output2_edit.setToolTip(os.path.join(self.save_dir, name2))
+            else:
+                self.output2_edit.setToolTip("")
+
+    # --- Location ---
+
+    def _update_location_display(self):
+        if self.save_dir:
+            display = self.save_dir
+            if len(display) > 45:
+                display = "..." + display[-42:]
+            self.location_btn.setText(display)
+            self.location_btn.setToolTip(self.save_dir)
+        else:
+            self.location_btn.setText("(nie wybrano)")
+            self.location_btn.setToolTip("")
+        self._update_output_tooltips()
+
+    def _open_save_dir(self):
+        if self.save_dir and os.path.isdir(self.save_dir):
+            subprocess.Popen(["xdg-open", self.save_dir])
+        else:
+            QMessageBox.warning(self, "Brak lokalizacji", "Nie wybrano pliku wejściowego.")
+
+    # --- Open external ---
+
+    def _open_input_external(self):
+        path = self.input_edit.text()
+        if path and os.path.isfile(path):
+            subprocess.Popen(["xdg-open", path])
+        else:
+            QMessageBox.warning(self, "Brak pliku", "Nie wybrano pliku wejściowego.")
+
+    def _open_output_external(self, which: int):
+        edit = self.output1_edit if which == 1 else self.output2_edit
+        name = edit.text()
+        if not name or not self.save_dir:
+            QMessageBox.warning(self, "Brak pliku", "Nie podano nazwy pliku wyjściowego.")
+            return
+        full_path = os.path.join(self.save_dir, name)
+        if os.path.isfile(full_path):
+            subprocess.Popen(["xdg-open", full_path])
+        else:
+            QMessageBox.warning(
+                self,
+                "Plik nie istnieje",
+                f"Plik nie został jeszcze zapisany:\n{full_path}",
+            )
+
+    # --- Preview ---
 
     def _update_preview(self, _state=None):
         path = self.input_edit.text()
@@ -301,6 +564,8 @@ class PrintPdfApp(QWidget):
                 page_numbers=self.cb_numbers.isChecked(),
                 two_up=self.cb_two_up.isChecked(),
                 landscape=self.cb_landscape.isChecked(),
+                duplex=self.cb_duplex.isChecked(),
+                preview_mode=self.preview_mode,
                 page_index=self.current_page,
                 target_width=1200,
             )
@@ -322,7 +587,8 @@ class PrintPdfApp(QWidget):
         available_w = viewport.width() - margin
         available_h = viewport.height() - margin
         scaled = self._current_pixmap.scaled(
-            available_w, available_h,
+            available_w,
+            available_h,
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation,
         )
@@ -342,28 +608,73 @@ class PrintPdfApp(QWidget):
             self.current_page += 1
             self._update_preview()
 
-    def _generate(self):
-        path = self.input_edit.text()
-        base = self.output_edit.text()
-        if not path:
+    # --- Save ---
+
+    def _validate_for_save(self) -> bool:
+        if not self.input_edit.text():
             QMessageBox.warning(self, "Brak pliku", "Wybierz plik wejściowy.")
-            return
-        if not base:
+            return False
+        if not self.output1_edit.text():
             QMessageBox.warning(self, "Brak nazwy", "Podaj nazwę pliku wyjściowego.")
+            return False
+        if self.cb_duplex.isChecked() and not self.output2_edit.text():
+            QMessageBox.warning(
+                self, "Brak nazwy", "Podaj nazwę pliku dla stron parzystych."
+            )
+            return False
+        return True
+
+    def _do_save(self, save_dir: str):
+        if not self._validate_for_save():
             return
 
         try:
-            outputs = process_pdf(
-                input_path=path,
-                output_base=base,
-                duplex=self.cb_duplex.isChecked(),
-                page_numbers=self.cb_numbers.isChecked(),
-                two_up=self.cb_two_up.isChecked(),
-                landscape=self.cb_landscape.isChecked(),
+            if self.cb_duplex.isChecked():
+                odd_path = os.path.join(save_dir, self.output1_edit.text())
+                even_path = os.path.join(save_dir, self.output2_edit.text())
+                outputs = process_pdf(
+                    input_path=self.input_edit.text(),
+                    duplex=True,
+                    page_numbers=self.cb_numbers.isChecked(),
+                    two_up=self.cb_two_up.isChecked(),
+                    landscape=self.cb_landscape.isChecked(),
+                    odd_path=odd_path,
+                    even_path=even_path,
+                )
+            else:
+                output_path = os.path.join(save_dir, self.output1_edit.text())
+                outputs = process_pdf(
+                    input_path=self.input_edit.text(),
+                    duplex=False,
+                    page_numbers=self.cb_numbers.isChecked(),
+                    two_up=self.cb_two_up.isChecked(),
+                    landscape=self.cb_landscape.isChecked(),
+                    output_path=output_path,
+                )
+            QMessageBox.information(
+                self, "Gotowe", "Utworzono pliki:\n" + "\n".join(outputs)
             )
-            QMessageBox.information(self, "Gotowe", "Utworzono pliki:\n" + "\n".join(outputs))
         except Exception as e:
             QMessageBox.critical(self, "Błąd", str(e))
+
+    def _save_default(self):
+        if not self.save_dir:
+            QMessageBox.warning(
+                self, "Brak lokalizacji", "Najpierw wybierz plik wejściowy."
+            )
+            return
+        self._do_save(self.save_dir)
+
+    def _save_choose_location(self):
+        if not self._validate_for_save():
+            return
+        chosen = QFileDialog.getExistingDirectory(
+            self, "Wybierz lokalizację zapisu", self.save_dir or ""
+        )
+        if chosen:
+            self.save_dir = chosen
+            self._update_location_display()
+            self._do_save(chosen)
 
 
 def main():

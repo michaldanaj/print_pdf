@@ -44,9 +44,29 @@ Algorytm powinien działać w kolejności:
 
 ## GUI
 
-Poza linią komend, powinno być GUI, z możliwością podglądu proponowanego wydruku.
+Poza linią komend, powinno być GUI.
 
 Tooltipy z tłumaczeniem funkcji.
+
+Po każdej zmianie parametru wydruku podgląd powinien zostać zaktualizowany.
+
+Po zmianie wielkości okna powinno nastąpić dostosowanie podglądu. Wielkość podglądu powinna być dopasowana do wielkości okna w którym jest wyświetlany.
+
+Nazwa wyjściowa powinna być pełna, z rozszerzeniem.
+
+Nazwa pliku powinna pojawiać się w tooltip, zamiast opisu.
+
+Powinny być dwa pola na nazwę pliku wyjściowego. Dla duplex, powinny być oba wypełnione, w przeciwnym razie tylko jedna. Opisy pól powinny być adekwatne do roli.
+
+Powinna być możliwość podglądu każdego z plików, wejściowego, jak i osobno każdego z osobnych. 
+
+Powinna być możliwość otwarcia każdego z plików w zewnętrznym programie.
+
+Przycisk Zapisz PDF powinien zapisywać w lokalizacji oryginalnego pliku.
+
+Przycisk 'Zapisz w lokalizacji' przed zapisaniem powinien dać możliwość wyboru innej lokalizację na pliki.
+
+Aktualnie wybrana lokalizacja powinna być wypisana z możliwością otwarcia systemowego managera plików w tej lokalizacji.
 
 
 

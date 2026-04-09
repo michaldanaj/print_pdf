@@ -8,14 +8,20 @@ A4_HEIGHT = 841.89  # points
 
 def process_pdf(
     input_path: str,
-    output_base: str,
+    output_base: str = None,
     duplex: bool = False,
     page_numbers: bool = False,
     two_up: bool = False,
     landscape: bool = False,
+    output_path: str = None,
+    odd_path: str = None,
+    even_path: str = None,
 ) -> list[str]:
-    """Process a PDF file for printing. Returns list of output file paths."""
+    """Process a PDF file for printing. Returns list of output file paths.
 
+    For non-duplex: provide output_path or output_base.
+    For duplex: provide (odd_path, even_path) or output_base.
+    """
     src = fitz.open(input_path)
 
     # Step 1: Determine output page size based on landscape option
@@ -36,12 +42,22 @@ def process_pdf(
 
     # Step 4 & 5: Duplex splitting or single output
     if duplex:
-        return _split_duplex(doc, output_base)
+        if odd_path and even_path:
+            return _split_duplex(doc, odd_path=odd_path, even_path=even_path)
+        elif output_base:
+            return _split_duplex(doc, output_base=output_base)
+        else:
+            raise ValueError("For duplex, provide output_base or both odd_path and even_path")
     else:
-        out_path = f"{output_base}.pdf"
-        doc.save(out_path)
+        if output_path:
+            out = output_path
+        elif output_base:
+            out = f"{output_base}.pdf"
+        else:
+            raise ValueError("Provide output_path or output_base")
+        doc.save(out)
         doc.close()
-        return [out_path]
+        return [out]
 
 
 def _reformat_pages(src: fitz.Document, width: float, height: float) -> fitz.Document:
@@ -140,13 +156,22 @@ def _add_page_numbers(doc: fitz.Document) -> None:
         )
 
 
-def _split_duplex(doc: fitz.Document, output_base: str) -> list[str]:
+def _split_duplex(
+    doc: fitz.Document,
+    output_base: str = None,
+    odd_path: str = None,
+    even_path: str = None,
+) -> list[str]:
     """Split document for manual duplex printing.
 
     - If page count is odd, add a blank page at the end
     - Reverse order of odd pages (1, 3, 5... becomes 5, 3, 1)
     - Save odd pages and even pages to separate files
     """
+    if output_base:
+        odd_path = f"{output_base}_odd.pdf"
+        even_path = f"{output_base}_even.pdf"
+
     total = len(doc)
 
     # Pad to even number of pages
@@ -161,9 +186,6 @@ def _split_duplex(doc: fitz.Document, output_base: str) -> list[str]:
 
     # Reverse odd pages so they print in correct order for manual duplex
     odd_indices.reverse()
-
-    odd_path = f"{output_base}_odd.pdf"
-    even_path = f"{output_base}_even.pdf"
 
     odd_doc = fitz.open()
     for idx in odd_indices:
@@ -186,14 +208,28 @@ def render_preview(
     page_numbers: bool = False,
     two_up: bool = False,
     landscape: bool = False,
+    duplex: bool = False,
+    preview_mode: str = "processed",
     page_index: int = 0,
     target_width: int = 400,
 ) -> tuple[bytes, int]:
     """Render a preview of a processed page as PNG bytes.
 
+    preview_mode: "input", "processed", "odd", or "even".
     Returns (png_bytes, total_pages).
     """
     src = fitz.open(input_path)
+
+    if preview_mode == "input":
+        total = len(src)
+        page_index = max(0, min(page_index, total - 1))
+        page = src[page_index]
+        zoom = target_width / page.rect.width
+        mat = fitz.Matrix(zoom, zoom)
+        pix = page.get_pixmap(matrix=mat)
+        png_bytes = pix.tobytes("png")
+        src.close()
+        return png_bytes, total
 
     if landscape:
         sheet_width, sheet_height = A4_HEIGHT, A4_WIDTH
@@ -208,10 +244,26 @@ def render_preview(
     if page_numbers:
         _add_page_numbers(doc)
 
-    total = len(doc)
-    page_index = max(0, min(page_index, total - 1))
+    if preview_mode in ("odd", "even") and duplex:
+        total = len(doc)
+        if total % 2 != 0:
+            last_page = doc[-1]
+            doc.new_page(width=last_page.rect.width, height=last_page.rect.height)
+            total = len(doc)
 
-    page = doc[page_index]
+        odd_indices = list(range(0, total, 2))
+        even_indices = list(range(1, total, 2))
+        odd_indices.reverse()
+
+        indices = odd_indices if preview_mode == "odd" else even_indices
+        total_for_mode = len(indices)
+        page_index = max(0, min(page_index, total_for_mode - 1))
+        page = doc[indices[page_index]]
+    else:
+        total_for_mode = len(doc)
+        page_index = max(0, min(page_index, total_for_mode - 1))
+        page = doc[page_index]
+
     zoom = target_width / page.rect.width
     mat = fitz.Matrix(zoom, zoom)
     pix = page.get_pixmap(matrix=mat)
@@ -220,4 +272,4 @@ def render_preview(
     doc.close()
     src.close()
 
-    return png_bytes, total
+    return png_bytes, total_for_mode
