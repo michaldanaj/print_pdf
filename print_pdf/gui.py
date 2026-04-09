@@ -483,6 +483,7 @@ class PrintPdfApp(QWidget):
         else:
             self.output1_edit.setText(f"{base}_print.pdf")
         self.current_page = 0
+        self._update_preview_buttons()
         self._update_preview()
 
     # --- Duplex toggle ---
@@ -531,17 +532,16 @@ class PrintPdfApp(QWidget):
         self._set_preview_mode(mode)
 
     def _update_preview_buttons(self):
-        buttons = {
+        mode_to_btn = {
             "input": self.btn_preview_input,
             "processed": self.btn_preview_output1,
             "odd": self.btn_preview_output1,
             "even": self.btn_preview_output2,
         }
-        for mode, btn in buttons.items():
-            if mode == self.preview_mode:
-                btn.setObjectName("iconBtnActive")
-            else:
-                btn.setObjectName("iconBtn")
+        active_btn = mode_to_btn.get(self.preview_mode)
+        for btn in (self.btn_preview_input, self.btn_preview_output1, self.btn_preview_output2):
+            name = "iconBtnActive" if btn is active_btn else "iconBtn"
+            btn.setObjectName(name)
             btn.style().unpolish(btn)
             btn.style().polish(btn)
 
