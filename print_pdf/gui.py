@@ -703,30 +703,27 @@ class PrintPdfApp(QWidget):
     def _do_save(self, save_dir: str):
         if not self._validate_for_save():
             return
+        if not self._preview_pdfs:
+            QMessageBox.warning(self, "Brak podglądu", "Załaduj plik wejściowy.")
+            return
 
+        import shutil
         try:
+            outputs = []
             if self.cb_duplex.isChecked():
-                odd_path = os.path.join(save_dir, self.output1_edit.text())
-                even_path = os.path.join(save_dir, self.output2_edit.text())
-                outputs = process_pdf(
-                    input_path=self.input_edit.text(),
-                    duplex=True,
-                    page_numbers=self.cb_numbers.isChecked(),
-                    two_up=self.cb_two_up.isChecked(),
-                    landscape=self.cb_landscape.isChecked(),
-                    odd_path=odd_path,
-                    even_path=even_path,
-                )
+                for key, name_edit in [
+                    ("odd", self.output1_edit),
+                    ("even", self.output2_edit),
+                ]:
+                    src = self._preview_pdfs.get(key)
+                    dst = os.path.join(save_dir, name_edit.text())
+                    shutil.copy2(src, dst)
+                    outputs.append(dst)
             else:
-                output_path = os.path.join(save_dir, self.output1_edit.text())
-                outputs = process_pdf(
-                    input_path=self.input_edit.text(),
-                    duplex=False,
-                    page_numbers=self.cb_numbers.isChecked(),
-                    two_up=self.cb_two_up.isChecked(),
-                    landscape=self.cb_landscape.isChecked(),
-                    output_path=output_path,
-                )
+                src = self._preview_pdfs.get("processed")
+                dst = os.path.join(save_dir, self.output1_edit.text())
+                shutil.copy2(src, dst)
+                outputs.append(dst)
             QMessageBox.information(
                 self, "Gotowe", "Utworzono pliki:\n" + "\n".join(outputs)
             )
