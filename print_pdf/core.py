@@ -1,6 +1,7 @@
 """Core PDF processing logic for print preparation."""
 
 import os
+import subprocess
 import tempfile
 
 import fitz  # PyMuPDF
@@ -208,15 +209,57 @@ def _split_duplex(
     return [odd_path, even_path]
 
 
+def _apply_page_range(src: fitz.Document, page_from: int, page_to: int) -> fitz.Document:
+    """Return a document with only pages in [page_from, page_to] (1-indexed).
+
+    Returns src unchanged if both are 0 or range covers all pages.
+    """
+    total = len(src)
+    start = (page_from - 1) if page_from > 0 else 0
+    end = (page_to - 1) if page_to > 0 else total - 1
+    start = max(0, min(start, total - 1))
+    end = max(start, min(end, total - 1))
+    if start == 0 and end == total - 1:
+        return src
+    subset = fitz.open()
+    subset.insert_pdf(src, from_page=start, to_page=end)
+    src.close()
+    return subset
+
+
+def print_pdf_file(pdf_path: str) -> tuple[bool, str]:
+    """Send a PDF file to the default printer using lp. Returns (ok, message)."""
+    try:
+        result = subprocess.run(
+            ["lp", pdf_path],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        if result.returncode == 0:
+            return True, result.stdout.strip()
+        return False, result.stderr.strip() or "Nieznany błąd drukowania"
+    except FileNotFoundError:
+        return False, "Polecenie 'lp' nie zostało znalezione. Zainstaluj CUPS."
+    except subprocess.TimeoutExpired:
+        return False, "Przekroczono czas oczekiwania na odpowiedź drukarki."
+
+
 def prepare_preview_pdfs(
     input_path: str,
     page_numbers: bool = False,
     two_up: bool = False,
     landscape: bool = False,
     duplex: bool = False,
+    page_from: int = 0,
+    page_to: int = 0,
 ) -> dict[str, str]:
-    """Generate processed PDF(s) in /tmp for preview. Returns {mode: path}."""
+    """Generate processed PDF(s) in /tmp for preview. Returns {mode: path}.
+
+    page_from/page_to are 1-indexed inclusive; 0 means no limit.
+    """
     src = fitz.open(input_path)
+    src = _apply_page_range(src, page_from, page_to)
 
     if landscape:
         sheet_width, sheet_height = A4_HEIGHT, A4_WIDTH

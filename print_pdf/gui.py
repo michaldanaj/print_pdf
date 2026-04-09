@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
@@ -25,6 +26,7 @@ from PyQt6.QtWidgets import (
 from print_pdf.core import (
     create_test_pdf,
     prepare_preview_pdfs,
+    print_pdf_file,
     process_pdf,
     render_page_from_pdf,
     render_preview,
@@ -349,6 +351,37 @@ class PrintPdfApp(QWidget):
         self.cb_duplex.stateChanged.connect(self._on_duplex_changed)
         opts_layout.addWidget(self.cb_duplex)
 
+        # Page range
+        range_row = QHBoxLayout()
+        self.cb_range = QCheckBox("Zakres stron:")
+        self.cb_range.setToolTip("Ogranicz przetwarzanie do podanego zakresu stron oryginału")
+        self.cb_range.stateChanged.connect(self._on_range_changed)
+        range_row.addWidget(self.cb_range)
+
+        self.spin_from = QSpinBox()
+        self.spin_from.setMinimum(1)
+        self.spin_from.setMaximum(9999)
+        self.spin_from.setValue(1)
+        self.spin_from.setToolTip("Pierwsza strona zakresu")
+        self.spin_from.setEnabled(False)
+        self.spin_from.setFixedWidth(56)
+        self.spin_from.valueChanged.connect(self._on_option_changed)
+        range_row.addWidget(self.spin_from)
+
+        range_row.addWidget(QLabel("–"))
+
+        self.spin_to = QSpinBox()
+        self.spin_to.setMinimum(1)
+        self.spin_to.setMaximum(9999)
+        self.spin_to.setValue(1)
+        self.spin_to.setToolTip("Ostatnia strona zakresu")
+        self.spin_to.setEnabled(False)
+        self.spin_to.setFixedWidth(56)
+        self.spin_to.valueChanged.connect(self._on_option_changed)
+        range_row.addWidget(self.spin_to)
+        range_row.addStretch()
+        opts_layout.addLayout(range_row)
+
         left_panel.addWidget(opts_group)
 
         # --- Save group ---
@@ -411,6 +444,14 @@ class PrintPdfApp(QWidget):
         left_panel.addWidget(save_group)
 
         left_panel.addStretch()
+
+        self.print_btn = QPushButton("Drukuj")
+        self.print_btn.setObjectName("generateBtn")
+        self.print_btn.setToolTip("Wyślij do drukarki")
+        self.print_btn.clicked.connect(self._print_document)
+        self.print_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.print_btn.setEnabled(False)
+        left_panel.addWidget(self.print_btn)
 
         left_widget = QWidget()
         left_widget.setLayout(left_panel)
@@ -503,6 +544,17 @@ class PrintPdfApp(QWidget):
             self.output2_edit.setText(f"{base}_print_even.pdf")
         else:
             self.output1_edit.setText(f"{base}_print.pdf")
+
+        import fitz as _fitz
+        doc = _fitz.open(path)
+        n = len(doc)
+        doc.close()
+        self.spin_from.setMaximum(n)
+        self.spin_to.setMaximum(n)
+        self.spin_from.setValue(1)
+        self.spin_to.setValue(n)
+        self.print_btn.setEnabled(True)
+
         self.current_page = 0
         self._regenerate_preview_pdfs(path)
         self._update_preview_buttons()
@@ -543,6 +595,12 @@ class PrintPdfApp(QWidget):
         self._regenerate_preview_pdfs()
         self._update_preview_buttons()
         self._update_preview()
+
+    def _on_range_changed(self, _state=None):
+        enabled = self.cb_range.isChecked()
+        self.spin_from.setEnabled(enabled)
+        self.spin_to.setEnabled(enabled)
+        self._on_option_changed()
 
     def _on_option_changed(self, _state=None):
         self.current_page = 0
@@ -626,11 +684,17 @@ class PrintPdfApp(QWidget):
 
     # --- Preview ---
 
+    def _page_range(self) -> tuple[int, int]:
+        if self.cb_range.isChecked():
+            return self.spin_from.value(), self.spin_to.value()
+        return 0, 0
+
     def _regenerate_preview_pdfs(self, path: str = None):
         if path is None:
             path = self.input_edit.text()
         if not path:
             return
+        page_from, page_to = self._page_range()
         try:
             self._preview_pdfs = prepare_preview_pdfs(
                 input_path=path,
@@ -638,6 +702,8 @@ class PrintPdfApp(QWidget):
                 two_up=self.cb_two_up.isChecked(),
                 landscape=self.cb_landscape.isChecked(),
                 duplex=self.cb_duplex.isChecked(),
+                page_from=page_from,
+                page_to=page_to,
             )
         except Exception as e:
             QMessageBox.critical(self, "Błąd podglądu", str(e))
@@ -748,6 +814,56 @@ class PrintPdfApp(QWidget):
             )
         except Exception as e:
             QMessageBox.critical(self, "Błąd", str(e))
+
+    def _print_document(self):
+        if not self._preview_pdfs:
+            QMessageBox.warning(self, "Brak podglądu", "Załaduj plik wejściowy.")
+            return
+
+        is_duplex = self.cb_duplex.isChecked()
+
+        if is_duplex:
+            even_path = self._preview_pdfs.get("even")
+            odd_path = self._preview_pdfs.get("odd")
+            if not even_path or not odd_path:
+                QMessageBox.warning(self, "Błąd", "Brak plików podglądu duplex.")
+                return
+
+            QMessageBox.information(
+                self, "Drukowanie", "Drukuję strony parzyste..."
+            )
+            ok, msg = print_pdf_file(even_path)
+            if not ok:
+                QMessageBox.critical(self, "Błąd drukowania", msg)
+                return
+
+            reply = QMessageBox.information(
+                self,
+                "Przekręć kartki",
+                "Przekręć kartki na drukarce aby wydrukować strony nieparzyste.\n\n"
+                "Naciśnij OK gdy jesteś gotowy.",
+                QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+            )
+            if reply != QMessageBox.StandardButton.Ok:
+                return
+
+            QMessageBox.information(
+                self, "Drukowanie", "Drukuję strony nieparzyste..."
+            )
+            ok, msg = print_pdf_file(odd_path)
+            if not ok:
+                QMessageBox.critical(self, "Błąd drukowania", msg)
+        else:
+            processed_path = self._preview_pdfs.get("processed")
+            if not processed_path:
+                QMessageBox.warning(self, "Błąd", "Brak pliku podglądu.")
+                return
+            QMessageBox.information(
+                self, "Drukowanie", "Drukuję dokument..."
+            )
+            ok, msg = print_pdf_file(processed_path)
+            if not ok:
+                QMessageBox.critical(self, "Błąd drukowania", msg)
 
     def _save_default(self):
         if not self.save_dir:
