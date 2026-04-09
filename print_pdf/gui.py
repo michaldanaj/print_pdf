@@ -441,9 +441,6 @@ class PrintPdfApp(QWidget):
         btn_row.addWidget(save_as_btn)
 
         save_layout.addLayout(btn_row)
-        left_panel.addWidget(save_group)
-
-        left_panel.addStretch()
 
         self.print_btn = QPushButton("Drukuj")
         self.print_btn.setObjectName("generateBtn")
@@ -453,10 +450,20 @@ class PrintPdfApp(QWidget):
         self.print_btn.setEnabled(False)
         left_panel.addWidget(self.print_btn)
 
+        left_panel.addWidget(save_group)
+        left_panel.addStretch()
+
         left_widget = QWidget()
         left_widget.setLayout(left_panel)
-        left_widget.setFixedWidth(320)
-        main_layout.addWidget(left_widget)
+        left_widget.setMinimumWidth(320)
+
+        left_scroll = QScrollArea()
+        left_scroll.setWidget(left_widget)
+        left_scroll.setWidgetResizable(True)
+        left_scroll.setFixedWidth(340)
+        left_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        left_scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
+        main_layout.addWidget(left_scroll)
 
         # --- Right panel: preview ---
         right_panel = QVBoxLayout()
