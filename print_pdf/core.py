@@ -227,15 +227,14 @@ def _apply_page_range(src: fitz.Document, page_from: int, page_to: int) -> fitz.
     return subset
 
 
-def print_pdf_file(pdf_path: str) -> tuple[bool, str]:
-    """Send a PDF file to the default printer using lp. Returns (ok, message)."""
+def print_pdf_file(pdf_path: str, printer_name: str = "") -> tuple[bool, str]:
+    """Send a PDF file to the given printer using lp. Returns (ok, message)."""
+    cmd = ["lp"]
+    if printer_name:
+        cmd += ["-d", printer_name]
+    cmd.append(pdf_path)
     try:
-        result = subprocess.run(
-            ["lp", pdf_path],
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
         if result.returncode == 0:
             return True, result.stdout.strip()
         return False, result.stderr.strip() or "Nieznany błąd drukowania"

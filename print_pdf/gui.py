@@ -5,6 +5,7 @@ import subprocess
 import sys
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
 from PyQt6.QtGui import QFont, QImage, QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
@@ -827,6 +828,13 @@ class PrintPdfApp(QWidget):
             QMessageBox.warning(self, "Brak podglądu", "Załaduj plik wejściowy.")
             return
 
+        # Show system print dialog to select printer
+        printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+        dialog = QPrintDialog(printer, self)
+        if dialog.exec() != QPrintDialog.DialogCode.Accepted:
+            return
+        printer_name = printer.printerName()
+
         is_duplex = self.cb_duplex.isChecked()
 
         if is_duplex:
@@ -836,17 +844,15 @@ class PrintPdfApp(QWidget):
                 QMessageBox.warning(self, "Błąd", "Brak plików podglądu duplex.")
                 return
 
-            QMessageBox.information(
-                self, "Drukowanie", "Drukuję strony parzyste..."
-            )
-            ok, msg = print_pdf_file(even_path)
+            ok, msg = print_pdf_file(even_path, printer_name)
             if not ok:
                 QMessageBox.critical(self, "Błąd drukowania", msg)
                 return
 
-            reply = QMessageBox.information(
+            reply = QMessageBox.question(
                 self,
                 "Przekręć kartki",
+                "Strony parzyste zostały wysłane do drukarki.\n\n"
                 "Przekręć kartki na drukarce aby wydrukować strony nieparzyste.\n\n"
                 "Naciśnij OK gdy jesteś gotowy.",
                 QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
@@ -854,10 +860,7 @@ class PrintPdfApp(QWidget):
             if reply != QMessageBox.StandardButton.Ok:
                 return
 
-            QMessageBox.information(
-                self, "Drukowanie", "Drukuję strony nieparzyste..."
-            )
-            ok, msg = print_pdf_file(odd_path)
+            ok, msg = print_pdf_file(odd_path, printer_name)
             if not ok:
                 QMessageBox.critical(self, "Błąd drukowania", msg)
         else:
@@ -865,10 +868,7 @@ class PrintPdfApp(QWidget):
             if not processed_path:
                 QMessageBox.warning(self, "Błąd", "Brak pliku podglądu.")
                 return
-            QMessageBox.information(
-                self, "Drukowanie", "Drukuję dokument..."
-            )
-            ok, msg = print_pdf_file(processed_path)
+            ok, msg = print_pdf_file(processed_path, printer_name)
             if not ok:
                 QMessageBox.critical(self, "Błąd drukowania", msg)
 
