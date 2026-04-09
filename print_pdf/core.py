@@ -1,6 +1,11 @@
 """Core PDF processing logic for print preparation."""
 
+import os
+import tempfile
+
 import fitz  # PyMuPDF
+
+_PREVIEW_DIR = tempfile.gettempdir()
 
 A4_WIDTH = 595.28  # points
 A4_HEIGHT = 841.89  # points
@@ -201,6 +206,61 @@ def _split_duplex(
 
     doc.close()
     return [odd_path, even_path]
+
+
+def prepare_preview_pdfs(
+    input_path: str,
+    page_numbers: bool = False,
+    two_up: bool = False,
+    landscape: bool = False,
+    duplex: bool = False,
+) -> dict[str, str]:
+    """Generate processed PDF(s) in /tmp for preview. Returns {mode: path}."""
+    src = fitz.open(input_path)
+
+    if landscape:
+        sheet_width, sheet_height = A4_HEIGHT, A4_WIDTH
+    else:
+        sheet_width, sheet_height = A4_WIDTH, A4_HEIGHT
+
+    if two_up:
+        doc = _make_two_up(src, sheet_width, sheet_height, landscape)
+    else:
+        doc = _reformat_pages(src, sheet_width, sheet_height)
+
+    if page_numbers:
+        _add_page_numbers(doc)
+
+    src.close()
+
+    if duplex:
+        odd_path = os.path.join(_PREVIEW_DIR, "print_pdf_preview_odd.pdf")
+        even_path = os.path.join(_PREVIEW_DIR, "print_pdf_preview_even.pdf")
+        _split_duplex(doc, odd_path=odd_path, even_path=even_path)
+        return {"odd": odd_path, "even": even_path}
+    else:
+        out_path = os.path.join(_PREVIEW_DIR, "print_pdf_preview.pdf")
+        doc.save(out_path)
+        doc.close()
+        return {"processed": out_path}
+
+
+def render_page_from_pdf(
+    pdf_path: str,
+    page_index: int = 0,
+    target_width: int = 400,
+) -> tuple[bytes, int]:
+    """Render a single page from a PDF file as PNG bytes. Returns (png, total)."""
+    doc = fitz.open(pdf_path)
+    total = len(doc)
+    page_index = max(0, min(page_index, total - 1))
+    page = doc[page_index]
+    zoom = target_width / page.rect.width
+    mat = fitz.Matrix(zoom, zoom)
+    pix = page.get_pixmap(matrix=mat)
+    png_bytes = pix.tobytes("png")
+    doc.close()
+    return png_bytes, total
 
 
 def create_test_pdf(output_path: str) -> str:

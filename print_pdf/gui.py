@@ -22,7 +22,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from print_pdf.core import create_test_pdf, process_pdf, render_preview
+from print_pdf.core import (
+    create_test_pdf,
+    prepare_preview_pdfs,
+    process_pdf,
+    render_page_from_pdf,
+    render_preview,
+)
 
 STYLESHEET = """
 QWidget#centralWidget {
@@ -199,6 +205,7 @@ class PrintPdfApp(QWidget):
         self._current_pixmap: QPixmap | None = None
         self.save_dir = os.getcwd()
         self.preview_mode = "processed"  # "input", "processed", "odd", "even"
+        self._preview_pdfs: dict[str, str] = {}  # mode -> /tmp path
 
         self._build_ui()
 
@@ -484,6 +491,7 @@ class PrintPdfApp(QWidget):
         else:
             self.output1_edit.setText(f"{base}_print.pdf")
         self.current_page = 0
+        self._regenerate_preview_pdfs(path)
         self._update_preview_buttons()
         self._update_preview()
 
@@ -513,11 +521,13 @@ class PrintPdfApp(QWidget):
                 self.preview_mode = "processed"
 
         self.current_page = 0
+        self._regenerate_preview_pdfs()
         self._update_preview_buttons()
         self._update_preview()
 
     def _on_option_changed(self, _state=None):
         self.current_page = 0
+        self._regenerate_preview_pdfs()
         self._update_preview()
 
     # --- Preview mode ---
@@ -584,22 +594,34 @@ class PrintPdfApp(QWidget):
             QMessageBox.warning(self, "Brak pliku", "Nie wybrano pliku wejściowego.")
 
     def _open_output_external(self, which: int):
-        edit = self.output1_edit if which == 1 else self.output2_edit
-        name = edit.text()
-        if not name or not self.save_dir:
-            QMessageBox.warning(self, "Brak pliku", "Nie podano nazwy pliku wyjściowego.")
-            return
-        full_path = os.path.join(self.save_dir, name)
-        if os.path.isfile(full_path):
-            subprocess.Popen(["xdg-open", full_path])
+        key = ("odd" if self.cb_duplex.isChecked() else "processed") if which == 1 else "even"
+        pdf_path = self._preview_pdfs.get(key)
+        if pdf_path and os.path.isfile(pdf_path):
+            subprocess.Popen(["xdg-open", pdf_path])
         else:
             QMessageBox.warning(
                 self,
-                "Plik nie istnieje",
-                f"Plik nie został jeszcze zapisany:\n{full_path}",
+                "Brak podglądu",
+                "Załaduj plik wejściowy, aby wygenerować podgląd.",
             )
 
     # --- Preview ---
+
+    def _regenerate_preview_pdfs(self, path: str = None):
+        if path is None:
+            path = self.input_edit.text()
+        if not path:
+            return
+        try:
+            self._preview_pdfs = prepare_preview_pdfs(
+                input_path=path,
+                page_numbers=self.cb_numbers.isChecked(),
+                two_up=self.cb_two_up.isChecked(),
+                landscape=self.cb_landscape.isChecked(),
+                duplex=self.cb_duplex.isChecked(),
+            )
+        except Exception as e:
+            QMessageBox.critical(self, "Błąd podglądu", str(e))
 
     def _update_preview(self, _state=None):
         path = self.input_edit.text()
@@ -607,16 +629,22 @@ class PrintPdfApp(QWidget):
             return
 
         try:
-            png_bytes, total = render_preview(
-                input_path=path,
-                page_numbers=self.cb_numbers.isChecked(),
-                two_up=self.cb_two_up.isChecked(),
-                landscape=self.cb_landscape.isChecked(),
-                duplex=self.cb_duplex.isChecked(),
-                preview_mode=self.preview_mode,
-                page_index=self.current_page,
-                target_width=1200,
-            )
+            if self.preview_mode == "input":
+                png_bytes, total = render_preview(
+                    input_path=path,
+                    preview_mode="input",
+                    page_index=self.current_page,
+                    target_width=1200,
+                )
+            else:
+                pdf_path = self._preview_pdfs.get(self.preview_mode)
+                if not pdf_path or not os.path.isfile(pdf_path):
+                    return
+                png_bytes, total = render_page_from_pdf(
+                    pdf_path,
+                    page_index=self.current_page,
+                    target_width=1200,
+                )
             self.total_pages = total
         except Exception as e:
             QMessageBox.critical(self, "Błąd podglądu", str(e))
