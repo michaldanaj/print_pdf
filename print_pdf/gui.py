@@ -108,14 +108,37 @@ QPushButton#secondaryBtn:hover {
 }
 
 QPushButton#navBtn {
-    padding: 6px 14px;
+    padding: 6px 18px;
     border: 1px solid #c0c0c0;
     border-radius: 4px;
     background: #ffffff;
+    font-size: 16px;
 }
 QPushButton#navBtn:hover {
     background: #e8f0fe;
     border-color: #5b9bd5;
+}
+
+QPushButton#iconBtn {
+    padding: 5px 9px;
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    background: #f0f0f0;
+    font-size: 15px;
+    min-width: 28px;
+}
+QPushButton#iconBtn:hover {
+    background: #e0e0e0;
+}
+
+QPushButton#iconBtnActive {
+    padding: 5px 9px;
+    border: 1px solid #5b9bd5;
+    border-radius: 4px;
+    background: #e0edfa;
+    font-size: 15px;
+    font-weight: bold;
+    min-width: 28px;
 }
 
 QPushButton#linkBtn {
@@ -206,31 +229,35 @@ class PrintPdfApp(QWidget):
         lbl_input.setObjectName("sectionLabel")
         file_layout.addWidget(lbl_input)
 
+        input_btn_row = QHBoxLayout()
+        browse_btn = QPushButton("Wybierz...")
+        browse_btn.setObjectName("browseBtn")
+        browse_btn.setToolTip("Wybierz plik PDF do przetworzenia")
+        browse_btn.clicked.connect(self._browse_input)
+        input_btn_row.addWidget(browse_btn)
+
+        test_btn = QPushButton("Test")
+        test_btn.setObjectName("smallBtn")
+        test_btn.setToolTip("Wygeneruj testowy PDF (4 strony) i załaduj go")
+        test_btn.clicked.connect(self._load_test_pdf)
+        input_btn_row.addWidget(test_btn)
+        input_btn_row.addStretch()
+        file_layout.addLayout(input_btn_row)
+
         input_row = QHBoxLayout()
         self.input_edit = QLineEdit()
         self.input_edit.setPlaceholderText("Wybierz plik PDF...")
         self.input_edit.setReadOnly(True)
         input_row.addWidget(self.input_edit)
 
-        browse_btn = QPushButton("Wybierz...")
-        browse_btn.setObjectName("browseBtn")
-        browse_btn.setToolTip("Wybierz plik PDF do przetworzenia")
-        browse_btn.clicked.connect(self._browse_input)
-        input_row.addWidget(browse_btn)
-
-        test_btn = QPushButton("Test")
-        test_btn.setObjectName("smallBtn")
-        test_btn.setToolTip("Wygeneruj testowy PDF (4 strony z dużymi cyframi) i załaduj go")
-        test_btn.clicked.connect(self._load_test_pdf)
-        input_row.addWidget(test_btn)
-
-        self.btn_preview_input = QPushButton("Podgląd")
-        self.btn_preview_input.setObjectName("smallBtn")
+        self.btn_preview_input = QPushButton("→")
+        self.btn_preview_input.setObjectName("iconBtn")
+        self.btn_preview_input.setToolTip("Pokaż w podglądzie")
         self.btn_preview_input.clicked.connect(lambda: self._set_preview_mode("input"))
         input_row.addWidget(self.btn_preview_input)
 
-        self.btn_open_input = QPushButton("Otwórz")
-        self.btn_open_input.setObjectName("smallBtn")
+        self.btn_open_input = QPushButton("↗")
+        self.btn_open_input.setObjectName("iconBtn")
         self.btn_open_input.setToolTip("Otwórz w zewnętrznym programie")
         self.btn_open_input.clicked.connect(self._open_input_external)
         input_row.addWidget(self.btn_open_input)
@@ -248,13 +275,14 @@ class PrintPdfApp(QWidget):
         self.output1_edit.textChanged.connect(self._update_output_tooltips)
         output1_row.addWidget(self.output1_edit)
 
-        self.btn_preview_output1 = QPushButton("Podgląd")
-        self.btn_preview_output1.setObjectName("smallBtn")
+        self.btn_preview_output1 = QPushButton("→")
+        self.btn_preview_output1.setObjectName("iconBtn")
+        self.btn_preview_output1.setToolTip("Pokaż w podglądzie")
         self.btn_preview_output1.clicked.connect(self._preview_output1)
         output1_row.addWidget(self.btn_preview_output1)
 
-        self.btn_open_output1 = QPushButton("Otwórz")
-        self.btn_open_output1.setObjectName("smallBtn")
+        self.btn_open_output1 = QPushButton("↗")
+        self.btn_open_output1.setObjectName("iconBtn")
         self.btn_open_output1.setToolTip("Otwórz w zewnętrznym programie")
         self.btn_open_output1.clicked.connect(lambda: self._open_output_external(1))
         output1_row.addWidget(self.btn_open_output1)
@@ -275,13 +303,14 @@ class PrintPdfApp(QWidget):
         self.output2_edit.textChanged.connect(self._update_output_tooltips)
         output2_row.addWidget(self.output2_edit)
 
-        self.btn_preview_output2 = QPushButton("Podgląd")
-        self.btn_preview_output2.setObjectName("smallBtn")
+        self.btn_preview_output2 = QPushButton("→")
+        self.btn_preview_output2.setObjectName("iconBtn")
+        self.btn_preview_output2.setToolTip("Pokaż w podglądzie")
         self.btn_preview_output2.clicked.connect(lambda: self._set_preview_mode("even"))
         output2_row.addWidget(self.btn_preview_output2)
 
-        self.btn_open_output2 = QPushButton("Otwórz")
-        self.btn_open_output2.setObjectName("smallBtn")
+        self.btn_open_output2 = QPushButton("↗")
+        self.btn_open_output2.setObjectName("iconBtn")
         self.btn_open_output2.setToolTip("Otwórz w zewnętrznym programie")
         self.btn_open_output2.clicked.connect(lambda: self._open_output_external(2))
         output2_row.addWidget(self.btn_open_output2)
@@ -398,8 +427,9 @@ class PrintPdfApp(QWidget):
         nav.setAlignment(Qt.AlignmentFlag.AlignCenter)
         nav.setSpacing(12)
 
-        self.btn_prev = QPushButton("  Poprzednia")
+        self.btn_prev = QPushButton("◀")
         self.btn_prev.setObjectName("navBtn")
+        self.btn_prev.setToolTip("Poprzednia strona")
         self.btn_prev.clicked.connect(self._prev_page)
         self.btn_prev.setCursor(Qt.CursorShape.PointingHandCursor)
         nav.addWidget(self.btn_prev)
@@ -408,8 +438,9 @@ class PrintPdfApp(QWidget):
         self.page_label.setObjectName("pageLabel")
         nav.addWidget(self.page_label)
 
-        self.btn_next = QPushButton("Następna  ")
+        self.btn_next = QPushButton("▶")
         self.btn_next.setObjectName("navBtn")
+        self.btn_next.setToolTip("Następna strona")
         self.btn_next.clicked.connect(self._next_page)
         self.btn_next.setCursor(Qt.CursorShape.PointingHandCursor)
         nav.addWidget(self.btn_next)
@@ -508,9 +539,9 @@ class PrintPdfApp(QWidget):
         }
         for mode, btn in buttons.items():
             if mode == self.preview_mode:
-                btn.setObjectName("previewActiveBtn")
+                btn.setObjectName("iconBtnActive")
             else:
-                btn.setObjectName("smallBtn")
+                btn.setObjectName("iconBtn")
             btn.style().unpolish(btn)
             btn.style().polish(btn)
 
