@@ -203,6 +203,40 @@ def _split_duplex(
     return [odd_path, even_path]
 
 
+def create_test_pdf(output_path: str) -> str:
+    """Create a 2-page test PDF with descriptive labels in each half."""
+    doc = fitz.open()
+    font_size = 36
+
+    for page_num in range(1, 5):
+        page = doc.new_page(width=A4_WIDTH, height=A4_HEIGHT)
+        half_h = A4_HEIGHT / 2
+
+        line_h = font_size * 1.4
+        for label, y_mid in [
+            (f"strona {page_num}, górna połowa", half_h / 2),
+            (f"strona {page_num}, dolna połowa", half_h + half_h / 2),
+        ]:
+            rect = fitz.Rect(20, y_mid - line_h, A4_WIDTH - 20, y_mid + line_h)
+            html = (
+                f'<p style="text-align:center; font-family:sans-serif;'
+                f'font-size:{font_size}px; color:#262626; margin:0;">'
+                f'{label}</p>'
+            )
+            page.insert_htmlbox(rect, html)
+
+        page.draw_line(
+            fitz.Point(40, half_h),
+            fitz.Point(A4_WIDTH - 40, half_h),
+            color=(0.7, 0.7, 0.7),
+            width=1,
+        )
+
+    doc.save(output_path)
+    doc.close()
+    return output_path
+
+
 def render_preview(
     input_path: str,
     page_numbers: bool = False,

@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from print_pdf.core import process_pdf, render_preview
+from print_pdf.core import create_test_pdf, process_pdf, render_preview
 
 STYLESHEET = """
 QWidget#centralWidget {
@@ -174,7 +174,7 @@ class PrintPdfApp(QWidget):
         self.current_page = 0
         self.total_pages = 0
         self._current_pixmap: QPixmap | None = None
-        self.save_dir = ""
+        self.save_dir = os.getcwd()
         self.preview_mode = "processed"  # "input", "processed", "odd", "even"
 
         self._build_ui()
@@ -217,6 +217,12 @@ class PrintPdfApp(QWidget):
         browse_btn.setToolTip("Wybierz plik PDF do przetworzenia")
         browse_btn.clicked.connect(self._browse_input)
         input_row.addWidget(browse_btn)
+
+        test_btn = QPushButton("Test")
+        test_btn.setObjectName("smallBtn")
+        test_btn.setToolTip("Wygeneruj testowy PDF (4 strony z dużymi cyframi) i załaduj go")
+        test_btn.clicked.connect(self._load_test_pdf)
+        input_row.addWidget(test_btn)
 
         self.btn_preview_input = QPushButton("Podgląd")
         self.btn_preview_input.setObjectName("smallBtn")
@@ -415,21 +421,38 @@ class PrintPdfApp(QWidget):
 
     # --- File browsing ---
 
+    def _load_test_pdf(self):
+        import tempfile
+        tmp = os.path.join(tempfile.gettempdir(), "print_pdf_test.pdf")
+        try:
+            create_test_pdf(tmp)
+        except Exception as e:
+            QMessageBox.critical(self, "Błąd", f"Nie udało się wygenerować PDF testowego:\n{e}")
+            return
+        # Load test file without changing save_dir
+        saved_dir = self.save_dir
+        self._load_input(tmp)
+        self.save_dir = saved_dir
+        self._update_location_display()
+
     def _browse_input(self):
         path, _ = QFileDialog.getOpenFileName(self, "Wybierz PDF", "", "PDF (*.pdf)")
         if path:
-            self.input_edit.setText(path)
-            self.input_edit.setToolTip(path)
-            self.save_dir = os.path.dirname(path)
-            self._update_location_display()
-            base = os.path.splitext(os.path.basename(path))[0]
-            if self.cb_duplex.isChecked():
-                self.output1_edit.setText(f"{base}_print_odd.pdf")
-                self.output2_edit.setText(f"{base}_print_even.pdf")
-            else:
-                self.output1_edit.setText(f"{base}_print.pdf")
-            self.current_page = 0
-            self._update_preview()
+            self._load_input(path)
+
+    def _load_input(self, path: str):
+        self.input_edit.setText(path)
+        self.input_edit.setToolTip(os.path.basename(path))
+        self.save_dir = os.path.dirname(path)
+        self._update_location_display()
+        base = os.path.splitext(os.path.basename(path))[0]
+        if self.cb_duplex.isChecked():
+            self.output1_edit.setText(f"{base}_print_odd.pdf")
+            self.output2_edit.setText(f"{base}_print_even.pdf")
+        else:
+            self.output1_edit.setText(f"{base}_print.pdf")
+        self.current_page = 0
+        self._update_preview()
 
     # --- Duplex toggle ---
 
@@ -494,17 +517,10 @@ class PrintPdfApp(QWidget):
     # --- Tooltips ---
 
     def _update_output_tooltips(self):
-        if self.save_dir:
-            name1 = self.output1_edit.text()
-            if name1:
-                self.output1_edit.setToolTip(os.path.join(self.save_dir, name1))
-            else:
-                self.output1_edit.setToolTip("")
-            name2 = self.output2_edit.text()
-            if name2:
-                self.output2_edit.setToolTip(os.path.join(self.save_dir, name2))
-            else:
-                self.output2_edit.setToolTip("")
+        name1 = self.output1_edit.text()
+        self.output1_edit.setToolTip(name1)
+        name2 = self.output2_edit.text()
+        self.output2_edit.setToolTip(name2)
 
     # --- Location ---
 
