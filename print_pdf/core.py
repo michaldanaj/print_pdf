@@ -311,7 +311,7 @@ def create_test_pdf(output_path: str) -> str:
     doc = fitz.open()
     font_size = 36
 
-    for page_num in range(1, 5):
+    for page_num in range(1, 4):
         page = doc.new_page(width=A4_WIDTH, height=A4_HEIGHT)
         half_h = A4_HEIGHT / 2
 
