@@ -272,16 +272,15 @@ class PrintPdfApp(QWidget):
         file_layout.addLayout(input_row)
         file_layout.addSpacing(10)
 
-        # Output file 1
+        # Output preview 1
         self.lbl_output1 = QLabel("Plik wyjściowy")
         self.lbl_output1.setObjectName("sectionLabel")
         file_layout.addWidget(self.lbl_output1)
 
         output1_row = QHBoxLayout()
-        self.output1_edit = QLineEdit()
-        self.output1_edit.setPlaceholderText("nazwa_pliku.pdf")
-        self.output1_edit.textChanged.connect(self._update_output_tooltips)
-        output1_row.addWidget(self.output1_edit)
+        self.preview_lbl_output1 = QLabel("Podgląd")
+        self.preview_lbl_output1.setStyleSheet("color: #444; padding: 5px 8px; background: #f8f8f8; border: 1px solid #ddd; border-radius: 4px;")
+        output1_row.addWidget(self.preview_lbl_output1, stretch=1)
 
         self.btn_preview_output1 = QPushButton("→")
         self.btn_preview_output1.setObjectName("iconBtn")
@@ -297,19 +296,19 @@ class PrintPdfApp(QWidget):
 
         file_layout.addLayout(output1_row)
 
-        # Output file 2 (duplex only)
+        # Output preview 2 (duplex only)
         self.lbl_output2 = QLabel("Strony parzyste")
         self.lbl_output2.setObjectName("sectionLabel")
         file_layout.addWidget(self.lbl_output2)
 
-        output2_row_widget = QWidget()
-        self.output2_row = output2_row_widget
-        output2_row = QHBoxLayout(output2_row_widget)
+        output2_file_row_widget = QWidget()
+        self.output2_file_row = output2_file_row_widget
+        output2_row = QHBoxLayout(output2_file_row_widget)
         output2_row.setContentsMargins(0, 0, 0, 0)
-        self.output2_edit = QLineEdit()
-        self.output2_edit.setPlaceholderText("nazwa_pliku.pdf")
-        self.output2_edit.textChanged.connect(self._update_output_tooltips)
-        output2_row.addWidget(self.output2_edit)
+
+        self.preview_lbl_output2 = QLabel("Podgląd parzyste")
+        self.preview_lbl_output2.setStyleSheet("color: #444; padding: 5px 8px; background: #f8f8f8; border: 1px solid #ddd; border-radius: 4px;")
+        output2_row.addWidget(self.preview_lbl_output2, stretch=1)
 
         self.btn_preview_output2 = QPushButton("→")
         self.btn_preview_output2.setObjectName("iconBtn")
@@ -323,11 +322,11 @@ class PrintPdfApp(QWidget):
         self.btn_open_output2.clicked.connect(lambda: self._open_output_external(2))
         output2_row.addWidget(self.btn_open_output2)
 
-        file_layout.addWidget(output2_row_widget)
+        file_layout.addWidget(output2_file_row_widget)
 
         # Initially hide output2 (shown only for duplex)
         self.lbl_output2.setVisible(False)
-        self.output2_row.setVisible(False)
+        self.output2_file_row.setVisible(False)
 
         left_panel.addWidget(file_group)
 
@@ -365,6 +364,29 @@ class PrintPdfApp(QWidget):
         save_group = QGroupBox("Zapis")
         save_layout = QVBoxLayout(save_group)
         save_layout.setSpacing(6)
+
+        # Output filenames
+        self.lbl_save_output1 = QLabel("Plik wyjściowy")
+        self.lbl_save_output1.setObjectName("sectionLabel")
+        save_layout.addWidget(self.lbl_save_output1)
+
+        self.output1_edit = QLineEdit()
+        self.output1_edit.setPlaceholderText("nazwa_pliku.pdf")
+        self.output1_edit.textChanged.connect(self._update_output_tooltips)
+        save_layout.addWidget(self.output1_edit)
+
+        self.lbl_save_output2 = QLabel("Strony parzyste")
+        self.lbl_save_output2.setObjectName("sectionLabel")
+        save_layout.addWidget(self.lbl_save_output2)
+
+        self.output2_edit = QLineEdit()
+        self.output2_edit.setPlaceholderText("nazwa_pliku.pdf")
+        self.output2_edit.textChanged.connect(self._update_output_tooltips)
+        save_layout.addWidget(self.output2_edit)
+
+        # Initially hide output2 save fields
+        self.lbl_save_output2.setVisible(False)
+        self.output2_edit.setVisible(False)
 
         loc_row = QHBoxLayout()
         loc_label = QLabel("Lokalizacja:")
@@ -499,12 +521,19 @@ class PrintPdfApp(QWidget):
 
     def _on_duplex_changed(self, _state=None):
         is_duplex = self.cb_duplex.isChecked()
+
+        # Pliki section
         self.lbl_output2.setVisible(is_duplex)
-        self.output2_row.setVisible(is_duplex)
+        self.output2_file_row.setVisible(is_duplex)
+
+        # Zapis section
+        self.lbl_save_output2.setVisible(is_duplex)
+        self.output2_edit.setVisible(is_duplex)
 
         if is_duplex:
             self.lbl_output1.setText("Strony nieparzyste")
-            # Update filenames
+            self.preview_lbl_output1.setText("Podgląd nieparzyste")
+            self.lbl_save_output1.setText("Strony nieparzyste")
             current = self.output1_edit.text()
             base = current.replace(".pdf", "").replace("_print", "")
             self.output1_edit.setText(f"{base}_print_odd.pdf")
@@ -513,6 +542,8 @@ class PrintPdfApp(QWidget):
                 self.preview_mode = "odd"
         else:
             self.lbl_output1.setText("Plik wyjściowy")
+            self.preview_lbl_output1.setText("Podgląd")
+            self.lbl_save_output1.setText("Plik wyjściowy")
             current = self.output1_edit.text()
             base = current.replace(".pdf", "").replace("_print_odd", "").replace("_print", "")
             self.output1_edit.setText(f"{base}_print.pdf")
