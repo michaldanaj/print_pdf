@@ -273,10 +273,6 @@ class PrintPdfApp(QWidget):
         file_layout.addSpacing(10)
 
         # Output preview 1
-        self.lbl_output1 = QLabel("Plik wyjściowy")
-        self.lbl_output1.setObjectName("sectionLabel")
-        file_layout.addWidget(self.lbl_output1)
-
         output1_row = QHBoxLayout()
         self.preview_lbl_output1 = QLabel("Podgląd")
         self.preview_lbl_output1.setStyleSheet("color: #444; padding: 5px 8px; background: #f8f8f8; border: 1px solid #ddd; border-radius: 4px;")
@@ -297,10 +293,6 @@ class PrintPdfApp(QWidget):
         file_layout.addLayout(output1_row)
 
         # Output preview 2 (duplex only)
-        self.lbl_output2 = QLabel("Strony parzyste")
-        self.lbl_output2.setObjectName("sectionLabel")
-        file_layout.addWidget(self.lbl_output2)
-
         output2_file_row_widget = QWidget()
         self.output2_file_row = output2_file_row_widget
         output2_row = QHBoxLayout(output2_file_row_widget)
@@ -325,7 +317,6 @@ class PrintPdfApp(QWidget):
         file_layout.addWidget(output2_file_row_widget)
 
         # Initially hide output2 (shown only for duplex)
-        self.lbl_output2.setVisible(False)
         self.output2_file_row.setVisible(False)
 
         left_panel.addWidget(file_group)
@@ -523,7 +514,6 @@ class PrintPdfApp(QWidget):
         is_duplex = self.cb_duplex.isChecked()
 
         # Pliki section
-        self.lbl_output2.setVisible(is_duplex)
         self.output2_file_row.setVisible(is_duplex)
 
         # Zapis section
@@ -531,7 +521,6 @@ class PrintPdfApp(QWidget):
         self.output2_edit.setVisible(is_duplex)
 
         if is_duplex:
-            self.lbl_output1.setText("Strony nieparzyste")
             self.preview_lbl_output1.setText("Podgląd nieparzyste")
             self.lbl_save_output1.setText("Strony nieparzyste")
             current = self.output1_edit.text()
@@ -541,7 +530,6 @@ class PrintPdfApp(QWidget):
             if self.preview_mode == "processed":
                 self.preview_mode = "odd"
         else:
-            self.lbl_output1.setText("Plik wyjściowy")
             self.preview_lbl_output1.setText("Podgląd")
             self.lbl_save_output1.setText("Plik wyjściowy")
             current = self.output1_edit.text()
