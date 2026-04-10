@@ -34,37 +34,31 @@ from print_pdf.core import (
 )
 
 STYLESHEET = """
-QWidget#centralWidget {
-    background-color: #f5f5f5;
-}
-
 QGroupBox {
     font-weight: bold;
-    border: 1px solid #d0d0d0;
+    border: 1px solid palette(mid);
     border-radius: 6px;
     margin-top: 12px;
     padding: 12px 8px 8px 8px;
-    background-color: #ffffff;
 }
 QGroupBox::title {
     subcontrol-origin: margin;
     left: 12px;
     padding: 0 6px;
-    color: #444444;
 }
 
 QLabel#sectionLabel {
     font-size: 11px;
-    color: #666666;
     font-weight: bold;
     margin-bottom: 2px;
 }
 
 QLineEdit {
     padding: 5px 8px;
-    border: 1px solid #c0c0c0;
+    border: 1px solid palette(mid);
     border-radius: 4px;
-    background: #ffffff;
+    background: palette(base);
+    color: palette(text);
 }
 QLineEdit:focus {
     border-color: #5b9bd5;
@@ -72,12 +66,13 @@ QLineEdit:focus {
 
 QPushButton#browseBtn, QPushButton#smallBtn {
     padding: 5px 10px;
-    border: 1px solid #c0c0c0;
+    border: 1px solid palette(mid);
     border-radius: 4px;
-    background: #f0f0f0;
+    background: palette(button);
+    color: palette(button-text);
 }
 QPushButton#browseBtn:hover, QPushButton#smallBtn:hover {
-    background: #e0e0e0;
+    background: palette(midlight);
 }
 
 QPushButton#previewActiveBtn {
@@ -85,6 +80,7 @@ QPushButton#previewActiveBtn {
     border: 1px solid #5b9bd5;
     border-radius: 4px;
     background: #e0edfa;
+    color: #1a3a6a;
     font-weight: bold;
 }
 
@@ -103,41 +99,47 @@ QPushButton#generateBtn:hover {
 QPushButton#generateBtn:pressed {
     background-color: #2a5a8c;
 }
+QPushButton#generateBtn:disabled {
+    background-color: palette(mid);
+    color: palette(dark);
+}
 
 QPushButton#secondaryBtn {
     padding: 10px;
     font-size: 13px;
-    color: #333333;
-    background-color: #e8e8e8;
-    border: 1px solid #c0c0c0;
+    background-color: palette(button);
+    color: palette(button-text);
+    border: 1px solid palette(mid);
     border-radius: 6px;
 }
 QPushButton#secondaryBtn:hover {
-    background-color: #d8d8d8;
+    background-color: palette(midlight);
 }
 
 QPushButton#navBtn {
     padding: 6px 18px;
-    border: 1px solid #c0c0c0;
+    border: 1px solid palette(mid);
     border-radius: 4px;
-    background: #ffffff;
+    background: palette(base);
+    color: palette(text);
     font-size: 16px;
 }
 QPushButton#navBtn:hover {
-    background: #e8f0fe;
+    background: palette(midlight);
     border-color: #5b9bd5;
 }
 
 QPushButton#iconBtn {
     padding: 5px 9px;
-    border: 1px solid #c0c0c0;
+    border: 1px solid palette(mid);
     border-radius: 4px;
-    background: #f0f0f0;
+    background: palette(button);
+    color: palette(button-text);
     font-size: 15px;
     min-width: 28px;
 }
 QPushButton#iconBtn:hover {
-    background: #e0e0e0;
+    background: palette(midlight);
 }
 
 QPushButton#iconBtnActive {
@@ -145,6 +147,7 @@ QPushButton#iconBtnActive {
     border: 1px solid #5b9bd5;
     border-radius: 4px;
     background: #e0edfa;
+    color: #1a3a6a;
     font-size: 15px;
     font-weight: bold;
     min-width: 28px;
@@ -162,26 +165,23 @@ QPushButton#linkBtn:hover {
 }
 
 QScrollArea#previewArea {
-    border: 1px solid #d0d0d0;
+    border: 1px solid palette(mid);
     border-radius: 6px;
-    background-color: #e8e8e8;
+    background-color: palette(dark);
 }
 
 QLabel#pageLabel {
     font-size: 12px;
-    color: #555555;
     font-weight: bold;
 }
 
 QLabel#titleLabel {
     font-size: 16px;
     font-weight: bold;
-    color: #333333;
 }
 
 QLabel#locationLabel {
     font-size: 10px;
-    color: #666666;
     padding: 2px 0;
 }
 
@@ -226,7 +226,7 @@ class PrintPdfApp(QWidget):
         left_panel.addWidget(title)
 
         subtitle = QLabel("Przygotowanie wydruku")
-        subtitle.setStyleSheet("color: #888888; font-size: 11px; margin-bottom: 4px;")
+        subtitle.setStyleSheet("font-size: 11px; margin-bottom: 4px;")
         left_panel.addWidget(subtitle)
 
         # --- File group ---
@@ -278,7 +278,7 @@ class PrintPdfApp(QWidget):
         # Output preview 1
         output1_row = QHBoxLayout()
         self.preview_lbl_output1 = QLabel("Podgląd")
-        self.preview_lbl_output1.setStyleSheet("color: #444; padding: 5px 8px; background: #f8f8f8; border: 1px solid #ddd; border-radius: 4px;")
+        self.preview_lbl_output1.setStyleSheet("padding: 5px 8px; border: 1px solid palette(mid); border-radius: 4px;")
         output1_row.addWidget(self.preview_lbl_output1, stretch=1)
 
         self.btn_preview_output1 = QPushButton("→")
@@ -302,7 +302,7 @@ class PrintPdfApp(QWidget):
         output2_row.setContentsMargins(0, 0, 0, 0)
 
         self.preview_lbl_output2 = QLabel("Podgląd parzyste")
-        self.preview_lbl_output2.setStyleSheet("color: #444; padding: 5px 8px; background: #f8f8f8; border: 1px solid #ddd; border-radius: 4px;")
+        self.preview_lbl_output2.setStyleSheet("padding: 5px 8px; border: 1px solid palette(mid); border-radius: 4px;")
         output2_row.addWidget(self.preview_lbl_output2, stretch=1)
 
         self.btn_preview_output2 = QPushButton("→")
