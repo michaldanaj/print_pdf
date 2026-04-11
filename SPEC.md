@@ -33,7 +33,7 @@ Algorytm działa w kolejności:
 4. Jeśli zaznaczona jest opcja `-d`, układa strony w kolejności:
    - jeśli aktualna (nie oryginalnego dokumentu) liczba stron jest nieparzysta, dodaje
      na koniec pustą stronę
-   - Odwraca kolejność stron nieparzystych
+   - Odwraca kolejność stron parzystych
 5. Zapisuje strony parzyste do jednego pliku, a nieparzyste do drugiego
 
 

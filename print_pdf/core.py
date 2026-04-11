@@ -171,7 +171,7 @@ def _split_duplex(
     """Split document for manual duplex printing.
 
     - If page count is odd, add a blank page at the end
-    - Reverse order of odd pages (1, 3, 5... becomes 5, 3, 1)
+    - Reverse order of even pages (2, 4, 6... becomes 6, 4, 2)
     - Save odd pages and even pages to separate files
     """
     if output_base:
@@ -190,8 +190,8 @@ def _split_duplex(
     odd_indices = list(range(0, total, 2))   # pages 1,3,5... (0-indexed: 0,2,4...)
     even_indices = list(range(1, total, 2))  # pages 2,4,6... (0-indexed: 1,3,5...)
 
-    # Reverse odd pages so they print in correct order for manual duplex
-    odd_indices.reverse()
+    # Reverse even pages so they print in correct order for manual duplex
+    even_indices.reverse()
 
     odd_doc = fitz.open()
     for idx in odd_indices:
@@ -389,7 +389,7 @@ def render_preview(
 
         odd_indices = list(range(0, total, 2))
         even_indices = list(range(1, total, 2))
-        odd_indices.reverse()
+        even_indices.reverse()
 
         indices = odd_indices if preview_mode == "odd" else even_indices
         total_for_mode = len(indices)
