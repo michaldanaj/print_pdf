@@ -33,167 +33,207 @@ from print_pdf.core import (
     render_preview,
 )
 
-STYLESHEET = """
-QGroupBox {
-    font-weight: bold;
-    border: 1px solid palette(mid);
+_STYLESHEET_TEMPLATE = """
+QGroupBox {{
+    border: 1px solid {border};
     border-radius: 6px;
     margin-top: 12px;
     padding: 12px 8px 8px 8px;
-}
-QGroupBox::title {
+    background-color: {groupbox_bg};
+}}
+QGroupBox::title {{
     subcontrol-origin: margin;
     left: 12px;
     padding: 0 6px;
-}
+    font-weight: normal;
+}}
 
-QLabel#sectionLabel {
-    font-size: 11px;
-    font-weight: bold;
+QLabel#sectionLabel {{
     margin-bottom: 2px;
-}
+}}
 
-QLineEdit {
+QLineEdit {{
     padding: 5px 8px;
-    border: 1px solid palette(mid);
+    border: 1px solid {border};
     border-radius: 4px;
     background: palette(base);
     color: palette(text);
-}
-QLineEdit:focus {
-    border-color: #5b9bd5;
-}
+}}
+QLineEdit:focus {{
+    border-color: palette(highlight);
+}}
 
-QPushButton#browseBtn, QPushButton#smallBtn {
+QPushButton#browseBtn, QPushButton#smallBtn {{
     padding: 5px 10px;
-    border: 1px solid palette(mid);
+    border: 1px solid {border};
     border-radius: 4px;
     background: palette(button);
     color: palette(button-text);
-}
-QPushButton#browseBtn:hover, QPushButton#smallBtn:hover {
+}}
+QPushButton#browseBtn:hover, QPushButton#smallBtn:hover {{
     background: palette(midlight);
-}
+}}
 
-QPushButton#previewActiveBtn {
+QPushButton#previewActiveBtn {{
     padding: 5px 10px;
-    border: 1px solid #5b9bd5;
+    border: 1px solid {accent_border};
     border-radius: 4px;
-    background: #e0edfa;
-    color: #1a3a6a;
-    font-weight: bold;
-}
+    background: {accent_bg};
+    color: {accent_text};
+    font-weight: normal;
+}}
 
-QPushButton#generateBtn {
+QPushButton#generateBtn {{
     padding: 10px;
-    font-size: 13px;
-    font-weight: bold;
+    font-weight: normal;
     color: #ffffff;
     background-color: #4a86c8;
     border: none;
     border-radius: 6px;
-}
-QPushButton#generateBtn:hover {
+}}
+QPushButton#generateBtn:hover {{
     background-color: #3a76b8;
-}
-QPushButton#generateBtn:pressed {
+}}
+QPushButton#generateBtn:pressed {{
     background-color: #2a5a8c;
-}
-QPushButton#generateBtn:disabled {
+}}
+QPushButton#generateBtn:disabled {{
     background-color: palette(mid);
     color: palette(dark);
-}
+}}
 
-QPushButton#secondaryBtn {
+QPushButton#secondaryBtn {{
     padding: 10px;
-    font-size: 13px;
     background-color: palette(button);
     color: palette(button-text);
-    border: 1px solid palette(mid);
+    border: 1px solid {border};
     border-radius: 6px;
-}
-QPushButton#secondaryBtn:hover {
+}}
+QPushButton#secondaryBtn:hover {{
     background-color: palette(midlight);
-}
+}}
 
-QPushButton#navBtn {
+QPushButton#navBtn {{
     padding: 6px 18px;
-    border: 1px solid palette(mid);
+    border: 1px solid {border};
     border-radius: 4px;
     background: palette(base);
     color: palette(text);
-    font-size: 16px;
-}
-QPushButton#navBtn:hover {
+    font-size: 18px;
+}}
+QPushButton#navBtn:hover {{
     background: palette(midlight);
-    border-color: #5b9bd5;
-}
+    border-color: palette(highlight);
+}}
 
-QPushButton#iconBtn {
+QPushButton#iconBtn {{
     padding: 5px 9px;
-    border: 1px solid palette(mid);
+    border: 1px solid {border};
     border-radius: 4px;
     background: palette(button);
     color: palette(button-text);
-    font-size: 15px;
+    font-size: 17px;
     min-width: 28px;
-}
-QPushButton#iconBtn:hover {
+}}
+QPushButton#iconBtn:hover {{
     background: palette(midlight);
-}
+}}
 
-QPushButton#iconBtnActive {
+QPushButton#iconBtnActive {{
     padding: 5px 9px;
-    border: 1px solid #5b9bd5;
+    border: 1px solid {accent_border};
     border-radius: 4px;
-    background: #e0edfa;
-    color: #1a3a6a;
-    font-size: 15px;
-    font-weight: bold;
+    background: {accent_bg};
+    color: {accent_text};
+    font-size: 17px;
+    font-weight: normal;
     min-width: 28px;
-}
+}}
 
-QPushButton#linkBtn {
+QPushButton#linkBtn {{
     border: none;
     background: transparent;
-    color: #4a86c8;
+    color: palette(link);
     text-decoration: underline;
     padding: 2px;
-}
-QPushButton#linkBtn:hover {
-    color: #2a5a8c;
-}
+}}
+QPushButton#linkBtn:hover {{
+    color: palette(link-visited);
+}}
 
-QScrollArea#previewArea {
-    border: 1px solid palette(mid);
+QLabel#previewFileLabel {{
+    padding: 5px 8px;
+    border: 1px solid {border};
+    border-radius: 4px;
+}}
+
+QScrollArea#previewArea {{
+    border: 1px solid {border};
     border-radius: 6px;
-    background-color: palette(dark);
-}
+    background-color: {preview_bg};
+}}
 
-QLabel#pageLabel {
+QLabel#pageLabel {{
+    font-size: 14px;
+    font-weight: normal;
+}}
+
+QLabel#titleLabel {{
+    font-size: 19px;
+    font-weight: normal;
+}}
+
+QLabel#locationLabel {{
     font-size: 12px;
-    font-weight: bold;
-}
-
-QLabel#titleLabel {
-    font-size: 16px;
-    font-weight: bold;
-}
-
-QLabel#locationLabel {
-    font-size: 10px;
     padding: 2px 0;
-}
+}}
 
-QCheckBox {
+QCheckBox {{
     spacing: 6px;
     padding: 3px 0;
-}
-QCheckBox::indicator {
+}}
+QCheckBox::indicator {{
     width: 16px;
     height: 16px;
-}
+}}
 """
+
+
+def _lerp_color(c1, c2, t):
+    """Return hex color at position t (0.0=c1, 1.0=c2) between two QColors."""
+    r = int(c1.red() + (c2.red() - c1.red()) * t)
+    g = int(c1.green() + (c2.green() - c1.green()) * t)
+    b = int(c1.blue() + (c2.blue() - c1.blue()) * t)
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
+def _build_stylesheet(app: QApplication) -> str:
+    """Build stylesheet with colors adapted to current theme."""
+    pal = app.palette()
+    bg = pal.color(pal.ColorRole.Window)
+    dark = pal.color(pal.ColorRole.Dark)
+    is_dark = bg.lightness() < 128
+    # 90% drogi od palette(dark) do palette(window)
+    groupbox_bg = _lerp_color(dark, bg, 0.9)
+    preview_bg = _lerp_color(dark, bg, 0.9)
+    if is_dark:
+        accent_bg = "#1a3352"
+        accent_text = "#7eb8f0"
+        accent_border = "#5b9bd5"
+        border = "#888888"
+    else:
+        accent_bg = "#e0edfa"
+        accent_text = "#1a3a6a"
+        accent_border = "#5b9bd5"
+        border = "#a0a0a0"
+    return _STYLESHEET_TEMPLATE.format(
+        accent_bg=accent_bg,
+        accent_text=accent_text,
+        accent_border=accent_border,
+        border=border,
+        groupbox_bg=groupbox_bg,
+        preview_bg=preview_bg,
+    )
 
 
 class PrintPdfApp(QWidget):
@@ -226,7 +266,7 @@ class PrintPdfApp(QWidget):
         left_panel.addWidget(title)
 
         subtitle = QLabel("Przygotowanie wydruku")
-        subtitle.setStyleSheet("font-size: 11px; margin-bottom: 4px;")
+        subtitle.setStyleSheet("font-size: 13px; margin-bottom: 4px;")
         left_panel.addWidget(subtitle)
 
         # --- File group ---
@@ -278,7 +318,7 @@ class PrintPdfApp(QWidget):
         # Output preview 1
         output1_row = QHBoxLayout()
         self.preview_lbl_output1 = QLabel("Podgląd")
-        self.preview_lbl_output1.setStyleSheet("padding: 5px 8px; border: 1px solid palette(mid); border-radius: 4px;")
+        self.preview_lbl_output1.setObjectName("previewFileLabel")
         output1_row.addWidget(self.preview_lbl_output1, stretch=1)
 
         self.btn_preview_output1 = QPushButton("→")
@@ -302,7 +342,7 @@ class PrintPdfApp(QWidget):
         output2_row.setContentsMargins(0, 0, 0, 0)
 
         self.preview_lbl_output2 = QLabel("Podgląd parzyste")
-        self.preview_lbl_output2.setStyleSheet("padding: 5px 8px; border: 1px solid palette(mid); border-radius: 4px;")
+        self.preview_lbl_output2.setObjectName("previewFileLabel")
         output2_row.addWidget(self.preview_lbl_output2, stretch=1)
 
         self.btn_preview_output2 = QPushButton("→")
@@ -487,7 +527,7 @@ class PrintPdfApp(QWidget):
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(20)
         shadow.setOffset(0, 2)
-        shadow.setColor(Qt.GlobalColor.gray)
+        shadow.setColor(self.palette().color(self.palette().ColorRole.Shadow))
         self.scroll.setGraphicsEffect(shadow)
 
         right_panel.addWidget(self.scroll, stretch=1)
@@ -894,8 +934,8 @@ class PrintPdfApp(QWidget):
 
 def main():
     app = QApplication(sys.argv)
-    app.setStyleSheet(STYLESHEET)
-    app.setFont(QFont("Segoe UI", 10))
+    app.setStyleSheet(_build_stylesheet(app))
+    app.setFont(QFont("Segoe UI", 12))
     window = PrintPdfApp()
     window.show()
     sys.exit(app.exec())
