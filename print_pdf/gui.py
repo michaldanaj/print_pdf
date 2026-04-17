@@ -6,7 +6,7 @@ import sys
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
-from PyQt6.QtGui import QFont, QImage, QPixmap
+from PyQt6.QtGui import QFont, QIcon, QImage, QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -934,6 +934,8 @@ class PrintPdfApp(QWidget):
 
 def main():
     app = QApplication(sys.argv)
+    app.setDesktopFileName("print-pdf-gui")
+    app.setWindowIcon(QIcon.fromTheme("print-pdf-gui"))
     app.setStyleSheet(_build_stylesheet(app))
     app.setFont(QFont("Segoe UI", 12))
     window = PrintPdfApp()
