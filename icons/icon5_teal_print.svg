@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ikona 5: Zielono-turkusowa, drukarka z dwoma stronami (odd/even) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bgGrad5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d9488" />
+      <stop offset="100%" style="stop-color:#065f46" />
+    </linearGradient>
+    <linearGradient id="pageWhite" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff" />
+      <stop offset="100%" style="stop-color:#e6faf8" />
+    </linearGradient>
+  </defs>
+
+  <!-- Tło -->
+  <rect x="8" y="8" width="240" height="240" rx="48" ry="48"
+        fill="url(#bgGrad5)" />
+
+  <!-- Korpus drukarki - centralna bryła -->
+  <rect x="38" y="94" width="180" height="78" rx="16" ry="16"
+        fill="white" fill-opacity="0.20" stroke="white" stroke-width="2" stroke-opacity="0.5"/>
+
+  <!-- Panel przedni drukarki -->
+  <rect x="50" y="106" width="156" height="54" rx="10" ry="10"
+        fill="white" fill-opacity="0.12"/>
+
+  <!-- Szczelina wejścia papieru (góra) -->
+  <rect x="80" y="90" width="96" height="12" rx="6" ry="6"
+        fill="white" fill-opacity="0.4"/>
+
+  <!-- Szczelina wyjścia papieru (dół) -->
+  <rect x="80" y="164" width="96" height="12" rx="6" ry="6"
+        fill="white" fill-opacity="0.4"/>
+
+  <!-- Papier wejściowy - strona nieparzysta (lewa) -->
+  <rect x="58" y="40" width="58" height="56" rx="5" ry="5"
+        fill="url(#pageWhite)" stroke="#5eead4" stroke-width="1.5"/>
+  <text x="87" y="62" font-family="Arial" font-size="11" font-weight="bold"
+        fill="#0d9488" text-anchor="middle">NIEP.</text>
+  <line x1="68" y1="72" x2="106" y2="72" stroke="#99ddd8" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="68" y1="82" x2="100" y2="82" stroke="#99ddd8" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Strzałka w dół -->
+  <polygon points="87,96 80,88 94,88" fill="white" fill-opacity="0.8"/>
+
+  <!-- Papier wejściowy - strona parzysta (prawa) -->
+  <rect x="140" y="40" width="58" height="56" rx="5" ry="5"
+        fill="url(#pageWhite)" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="169" y="62" font-family="Arial" font-size="11" font-weight="bold"
+        fill="#b45309" text-anchor="middle">PAR.</text>
+  <line x1="150" y1="72" x2="188" y2="72" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="150" y1="82" x2="182" y2="82" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Strzałka w dół -->
+  <polygon points="169,96 162,88 176,88" fill="white" fill-opacity="0.8"/>
+
+  <!-- Przycisk/kontrolka na drukarce -->
+  <circle cx="172" cy="133" r="9" fill="#4ade80" fill-opacity="0.9"/>
+  <circle cx="172" cy="133" r="5" fill="white" fill-opacity="0.6"/>
+
+  <!-- Papier wyjściowy (złączone, gotowe do druku) -->
+  <rect x="84" y="174" width="88" height="44" rx="5" ry="5"
+        fill="url(#pageWhite)" stroke="#5eead4" stroke-width="2"/>
+  <!-- Linie na wyjściowym dokumencie -->
+  <line x1="96" y1="188" x2="160" y2="188" stroke="#5eead4" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="96" y1="199" x2="160" y2="199" stroke="#5eead4" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="96" y1="210" x2="140" y2="210" stroke="#5eead4" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Strzałki zbieżne (niep. i par. trafiają do drukarki) -->
+  <line x1="87" y1="40" x2="100" y2="92" stroke="white" stroke-width="1.5"
+        stroke-opacity="0.3" stroke-dasharray="4,3"/>
+  <line x1="169" y1="40" x2="156" y2="92" stroke="white" stroke-width="1.5"
+        stroke-opacity="0.3" stroke-dasharray="4,3"/>
+</svg>

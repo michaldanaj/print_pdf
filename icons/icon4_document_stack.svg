@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ikona 4: Stos dokumentów z symbolem PDF - elegancka, fioletowa -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bgGrad4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed" />
+      <stop offset="100%" style="stop-color:#4c1d95" />
+    </linearGradient>
+    <linearGradient id="docGrad4a" x1="0%" y1="0%" x2="5%" y2="100%">
+      <stop offset="0%" style="stop-color:#ede9fe" />
+      <stop offset="100%" style="stop-color:#ddd6fe" />
+    </linearGradient>
+    <linearGradient id="docGrad4b" x1="0%" y1="0%" x2="5%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff" />
+      <stop offset="100%" style="stop-color:#f0f0ff" />
+    </linearGradient>
+    <filter id="shadow4">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Tło -->
+  <rect x="8" y="8" width="240" height="240" rx="48" ry="48"
+        fill="url(#bgGrad4)" />
+
+  <!-- Dokument 3 (najniżej, z tyłu, przesunięty) -->
+  <g transform="rotate(12, 128, 128)" filter="url(#shadow4)">
+    <rect x="76" y="64" width="100" height="128" rx="8" ry="8"
+          fill="#c4b5fd" fill-opacity="0.6"/>
+  </g>
+
+  <!-- Dokument 2 (środkowy) -->
+  <g transform="rotate(5, 128, 128)" filter="url(#shadow4)">
+    <rect x="72" y="60" width="100" height="128" rx="8" ry="8"
+          fill="url(#docGrad4a)" stroke="#a78bfa" stroke-width="1.5"/>
+    <!-- Zawinięty róg -->
+    <path d="M 148 60 L 172 60 L 172 84 L 148 84 Z" fill="#a78bfa" fill-opacity="0.4"/>
+    <path d="M 148 60 L 172 84 L 148 84 Z" fill="#7c3aed" fill-opacity="0.2"/>
+  </g>
+
+  <!-- Dokument 1 (przód, główny) -->
+  <g filter="url(#shadow4)">
+    <rect x="68" y="56" width="108" height="138" rx="8" ry="8"
+          fill="url(#docGrad4b)" stroke="#c4b5fd" stroke-width="2"/>
+    <!-- Zawinięty róg -->
+    <path d="M 148 56 L 176 56 L 176 84 Z" fill="#ddd6fe"/>
+    <path d="M 148 56 L 176 84 L 148 84 Z" fill="#7c3aed" fill-opacity="0.15"/>
+
+    <!-- Napis PDF w czerwonym prostokącie -->
+    <rect x="82" y="78" width="52" height="24" rx="4" ry="4" fill="#ef4444"/>
+    <text x="108" y="95" font-family="Arial, Helvetica, sans-serif" font-weight="bold"
+          font-size="15" fill="white" text-anchor="middle">PDF</text>
+
+    <!-- Linie tekstu -->
+    <line x1="82" y1="118" x2="155" y2="118" stroke="#a78bfa" stroke-width="3" stroke-linecap="round"/>
+    <line x1="82" y1="132" x2="155" y2="132" stroke="#a78bfa" stroke-width="3" stroke-linecap="round"/>
+    <line x1="82" y1="146" x2="135" y2="146" stroke="#a78bfa" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- Ikona drukowania / strzałki w dół przy dolnej krawędzi dokumentów -->
+  <!-- Półokrągła strzałka odwrócenia (duplex) -->
+  <g transform="translate(128, 218)">
+    <path d="M -42 0 Q -42 -22 0 -22 Q 42 -22 42 0"
+          stroke="white" stroke-width="5" fill="none" stroke-linecap="round"
+          stroke-opacity="0.85"/>
+    <polygon points="-42,0 -52,-8 -32,-8" fill="white" fill-opacity="0.85"/>
+    <polygon points="42,0 32,-8 52,-8" fill="white" fill-opacity="0.85"/>
+  </g>
+</svg>

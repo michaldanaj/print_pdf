@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ikona 2: Dwie strony z strzałką duplex - motyw obrotu/dwustronności -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bgGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a5f" />
+      <stop offset="100%" style="stop-color:#0f2240" />
+    </linearGradient>
+    <linearGradient id="page1Grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff" />
+      <stop offset="100%" style="stop-color:#ddeeff" />
+    </linearGradient>
+    <linearGradient id="page2Grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff" />
+      <stop offset="100%" style="stop-color:#ffe8dd" />
+    </linearGradient>
+  </defs>
+
+  <!-- Tło -->
+  <rect x="8" y="8" width="240" height="240" rx="48" ry="48"
+        fill="url(#bgGrad2)" />
+
+  <!-- Strona lewa (nieparzysta) -->
+  <g transform="rotate(-8, 94, 128)">
+    <rect x="42" y="58" width="104" height="136" rx="8" ry="8"
+          fill="url(#page1Grad)" stroke="#6699cc" stroke-width="2"/>
+    <!-- Róg zawinięty -->
+    <path d="M 122 58 L 146 58 L 146 82 Z" fill="#aac8e8"/>
+    <!-- Linie tekstu -->
+    <line x1="58" y1="90" x2="118" y2="90" stroke="#99aacc" stroke-width="3" stroke-linecap="round"/>
+    <line x1="58" y1="104" x2="118" y2="104" stroke="#99aacc" stroke-width="3" stroke-linecap="round"/>
+    <line x1="58" y1="118" x2="98" y2="118" stroke="#99aacc" stroke-width="3" stroke-linecap="round"/>
+    <!-- Numer strony -->
+    <text x="94" y="178" font-family="Arial" font-size="18" font-weight="bold"
+          fill="#5577aa" text-anchor="middle">1</text>
+  </g>
+
+  <!-- Strona prawa (parzysta) -->
+  <g transform="rotate(8, 162, 128)">
+    <rect x="110" y="62" width="104" height="136" rx="8" ry="8"
+          fill="url(#page2Grad)" stroke="#cc9966" stroke-width="2"/>
+    <!-- Róg zawinięty -->
+    <path d="M 190 62 L 214 62 L 214 86 Z" fill="#e8c8aa"/>
+    <!-- Linie tekstu -->
+    <line x1="126" y1="94" x2="186" y2="94" stroke="#ccaa88" stroke-width="3" stroke-linecap="round"/>
+    <line x1="126" y1="108" x2="186" y2="108" stroke="#ccaa88" stroke-width="3" stroke-linecap="round"/>
+    <line x1="126" y1="122" x2="166" y2="122" stroke="#ccaa88" stroke-width="3" stroke-linecap="round"/>
+    <!-- Numer strony -->
+    <text x="162" y="182" font-family="Arial" font-size="18" font-weight="bold"
+          fill="#aa7755" text-anchor="middle">2</text>
+  </g>
+
+  <!-- Strzałka cykliczna (duplex) -->
+  <path d="M 108 210 Q 128 232 148 210" stroke="#4ade80" stroke-width="5"
+        fill="none" stroke-linecap="round"/>
+  <polygon points="103,207 108,218 116,210" fill="#4ade80"/>
+  <polygon points="153,207 148,218 140,210" fill="#4ade80"/>
+</svg>

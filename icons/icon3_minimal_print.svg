@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ikona 3: Minimalistyczna - drukarka flat design -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bgGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f97316" />
+      <stop offset="100%" style="stop-color:#c2410c" />
+    </linearGradient>
+  </defs>
+
+  <!-- Tło -->
+  <rect x="8" y="8" width="240" height="240" rx="48" ry="48"
+        fill="url(#bgGrad3)" />
+
+  <!-- Papier wejściowy (schodzi do drukarki) -->
+  <rect x="90" y="46" width="76" height="88" rx="6" ry="6"
+        fill="white" fill-opacity="0.95"/>
+  <!-- Zawinięty róg dokumentu -->
+  <path d="M 148 46 L 166 46 L 166 64 Z" fill="white" fill-opacity="0.4"/>
+  <path d="M 148 46 L 166 64 L 148 64 Z" fill="#e85d0a" fill-opacity="0.3"/>
+  <!-- Linie na dokumencie -->
+  <line x1="104" y1="74" x2="150" y2="74" stroke="#f97316" stroke-width="3.5" stroke-linecap="round" stroke-opacity="0.5"/>
+  <line x1="104" y1="88" x2="150" y2="88" stroke="#f97316" stroke-width="3.5" stroke-linecap="round" stroke-opacity="0.5"/>
+  <line x1="104" y1="102" x2="136" y2="102" stroke="#f97316" stroke-width="3.5" stroke-linecap="round" stroke-opacity="0.5"/>
+
+  <!-- Korpus drukarki (płaski, gruby) -->
+  <rect x="44" y="118" width="168" height="52" rx="10" ry="10"
+        fill="white" fill-opacity="0.22"/>
+  <!-- Wewnętrzna część drukarki (ciemniejsza) -->
+  <rect x="56" y="128" width="144" height="32" rx="6" ry="6"
+        fill="white" fill-opacity="0.10"/>
+
+  <!-- Szczelina drukarki -->
+  <rect x="80" y="138" width="96" height="8" rx="4" ry="4"
+        fill="white" fill-opacity="0.5"/>
+
+  <!-- Kontrolka LED -->
+  <circle cx="180" cy="144" r="6" fill="#4ade80"/>
+  <circle cx="180" cy="144" r="3" fill="white" fill-opacity="0.5"/>
+
+  <!-- Papier wychodzący -->
+  <rect x="90" y="162" width="76" height="50" rx="4" ry="4"
+        fill="white" fill-opacity="0.95"/>
+  <!-- Linie na wychodzącym papierze -->
+  <line x1="104" y1="178" x2="150" y2="178" stroke="#f97316" stroke-width="3" stroke-linecap="round" stroke-opacity="0.4"/>
+  <line x1="104" y1="191" x2="150" y2="191" stroke="#f97316" stroke-width="3" stroke-linecap="round" stroke-opacity="0.4"/>
+
+  <!-- Strzałki kierunku (góra i dół przy szczelinie) -->
+  <polygon points="128,116 122,108 134,108" fill="white" fill-opacity="0.7"/>
+  <polygon points="128,160 122,168 134,168" fill="white" fill-opacity="0.7"/>
+</svg>

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Print PDF
+Comment=Przygotuj pliki PDF do druku dwustronnego
+Exec=print-pdf-gui
+Icon=print-pdf-gui
+Terminal=false
+Categories=Office;Printing;
+Keywords=pdf;print;druk;duplex;
