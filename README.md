@@ -14,6 +14,8 @@ możliwymi opcjami:
 - z opcją czy dwie czy jedna strona na stronie wydruku
 - układ pionowy, czy poziomy
 
+Więcej szczegółów w [Specyfikacji](SPEC.md) 
+
 ## TODO
 
 pdfxup użyć zamiast pdftk. To odinstalować.
@@ -49,5 +51,4 @@ Jeszczeni zaimplementowane.
 Odpowiedź chata: https://chatgpt.com/share/6995fa49-7200-8005-acc9-b18d4945f177
 
 Odpowiedż claude: https://claude.ai/share/74f8c0aa-ea69-49e7-ae58-d6513a18ccff
-
 
