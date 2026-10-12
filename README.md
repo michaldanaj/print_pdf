@@ -1,3 +1,9 @@
+## Potrzeba
+
+Na linux, każda aplikacja ma totalnie inną formatkę do przygotowania wydruku. I chyba 
+żadna nie spełnia moich oczekiwań. Podstawowowym celem jest przygotowanie pdf-a do wydruku,
+z możliwością zestawienia kilku stron na arkuszu, z numeracją stron, manualnym drukiem
+dwustronnym.
 
 ## Założenia 
 
